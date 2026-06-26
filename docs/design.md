@@ -66,7 +66,7 @@ flowchart TB
 
         subgraph CR["Cloud Run: Agent API"]
             API["FastAPI"]
-            ADK["ADK Agent<br/>Gemini 2.5 Pro"]
+            ADK["ADK Agent<br/>Gemini 3.5 Flash"]
         end
 
         subgraph AI["Google Cloud AI"]
@@ -101,7 +101,7 @@ sequenceDiagram
     participant Bot as Discord Bot<br/>(GCE)
     participant GCS as Cloud Storage
     participant CT as Cloud Tasks
-    participant Agent as ADK Agent<br/>(Cloud Run)
+    participant Agent as ADK Agent<br/>Gemini 3.5 Flash<br/>(Cloud Run)
     participant STT as Speech-to-Text
     participant Gemini as Gemini API
     participant FS as Firestore
@@ -227,7 +227,7 @@ from google.adk.integrations.firestore import (
 )
 
 root_agent = Agent(
-    model="gemini-2.5-pro",
+    model="gemini-3.5-flash",
     name="minutes_agent",
     instruction="""
     あなたは会議のアカウンタビリティ・エージェントです。
@@ -305,75 +305,93 @@ minutes-agent (database)
 
 ### 6.1 Recording & Minutes Generation (全自動)
 
-```
-User: /join
-  → Bot が voice channel に参加、録音開始
-  → Bot: 「🎙️ 録音を開始しました」
+```mermaid
+sequenceDiagram
+    actor User
+    participant Bot as Discord Bot
+    participant VC as Voice Channel
+    participant DC as Text Channel
 
-(会議進行中...)
+    User->>Bot: /join
+    Bot->>VC: Voice Channel 参加
+    Bot->>Bot: start_recording (話者別 WaveSink)
+    Bot-->>User: 録音を開始しました
 
-User: /stop  OR  全員が voice channel から退出
-  → Bot: 「録音を停止しました。議事録を作成中です...」
-  → 音声ファイルを Cloud Storage にアップロード
-  → Cloud Tasks に enqueue
+    Note over VC: 会議進行中...
 
-(バックグラウンド処理: 3〜5分)
-  → Speech-to-Text API で話者別文字起こし
-  → タイムスタンプで時系列統合
-  → Gemini で議事録生成
-  → Gemini でアクションアイテム抽出
-  → Firestore に保存
+    alt ユーザーが明示的に停止
+        User->>Bot: /stop
+    else 全員が退出
+        VC-->>Bot: on_voice_state_update (参加者 0)
+    end
 
-Bot: 議事録を Discord チャンネルに投稿
-  → 「📝 議事録を作成しました」
-  → 議事録本文 (Embed)
-  → 「📋 アクションアイテム: 3件」
-  → アクションアイテム一覧
+    Bot->>Bot: 録音停止・wav 保存
+    Bot-->>User: 議事録を作成中です...
+
+    Note over Bot: Cloud Storage アップロード<br/>→ Cloud Tasks enqueue<br/>→ Agent 処理 (3〜5分)
+
+    Bot->>DC: 議事録投稿 (Embed)
+    Bot->>DC: アクションアイテム一覧
 ```
 
 ### 6.2 Ask (対話検索)
 
-```
-User: /ask 前回のリリース日程について何が決まった？
-  → Interactions Endpoint → Cloud Run
-  → ADK Agent が search_minutes ツールで検索
-  → 複数の議事録を横断して関連箇所を収集
-  → Gemini が回答を合成
+```mermaid
+sequenceDiagram
+    actor User
+    participant CR as Cloud Run<br/>(Interactions)
+    participant Agent as ADK Agent
+    participant FS as Firestore
+    participant DC as Text Channel
 
-Bot: 「6/12 の定例で、リリース日を 7/1 に決定しました。
-      担当は @alice で、ステージング環境のテストが前提条件です。
-      （出典: 2026-06-12 議事録）」
+    User->>CR: /ask 前回のリリース日程は？
+    CR-->>User: 考え中... (deferred response)
+    CR->>Agent: query 実行
+    Agent->>FS: search_minutes (過去の議事録検索)
+    FS-->>Agent: 関連する議事録
+    Agent->>Agent: 複数議事録を横断して回答を合成
+    Agent->>DC: 回答を followup で投稿
 ```
 
 ### 6.3 Action Items
 
-```
-User: /actions
-  → Interactions Endpoint → Cloud Run
-  → Firestore から未完了アクションアイテムを取得
+```mermaid
+sequenceDiagram
+    actor User
+    participant CR as Cloud Run<br/>(Interactions)
+    participant FS as Firestore
+    participant DC as Text Channel
 
-Bot: 「📋 未完了のアクションアイテム: 3件
+    User->>CR: /actions
+    CR->>FS: 未完了アクションアイテム取得
+    FS-->>CR: アクションアイテム一覧
+    CR->>DC: 一覧表示 (期限超過・期限間近を強調)
 
-  1. ⏰ API ドキュメント更新 — @bob（期限: 6/28、あと2日）
-  2. 🔴 テスト環境構築 — @charlie（期限超過: 6/20）
-  3. 🟡 デザインレビュー依頼 — @alice（期限なし）」
+    User->>CR: /action-done abc123
+    CR->>FS: status → completed
+    CR-->>User: 完了にしました
 ```
 
 ### 6.4 Between-Meetings: 自律リマインド
 
-```
-(Cloud Scheduler → Cloud Run → ADK Agent、毎日 10:00)
+```mermaid
+sequenceDiagram
+    participant CS as Cloud Scheduler<br/>(毎日 10:00)
+    participant Agent as ADK Agent
+    participant FS as Firestore
+    participant DC as Text Channel
 
-Agent: get_pending_actions で期限超過・期限間近のアイテムを検出
-  → send_discord_message でリマインド
+    CS->>Agent: 定期トリガー
+    Agent->>FS: get_pending_actions
+    FS-->>Agent: 未完了アイテム
 
-Bot: 「⏰ アクションアイテムのリマインドです
+    Agent->>Agent: 期限超過・期限間近を判定
 
-  🔴 期限超過:
-  - テスト環境構築 — @charlie（6/20 期限、6日超過）
-
-  ⏰ 期限間近:
-  - API ドキュメント更新 — @bob（6/28 期限、あと2日）」
+    alt 通知対象あり
+        Agent->>DC: リマインド通知 (期限超過は赤、間近は黄)
+    else 通知対象なし
+        Note over Agent: 何もしない (静かに終了)
+    end
 ```
 
 ## 7. Slash Commands
@@ -391,7 +409,7 @@ Bot: 「⏰ アクションアイテムのリマインドです
 
 | カテゴリ | 技術 | 用途 |
 |----------|------|------|
-| **AI / ML** | Gemini 2.5 Pro | 議事録生成、アクションアイテム抽出、対話応答 |
+| **AI / ML** | Gemini 3.5 Flash | 議事録生成、アクションアイテム抽出、対話応答 |
 | | Speech-to-Text API (V2) | 音声の文字起こし（話者分離対応） |
 | | ADK (Agent Development Kit) | エージェントオーケストレーション |
 | **Compute** | Cloud Run | Agent API (サーバーレス) |
