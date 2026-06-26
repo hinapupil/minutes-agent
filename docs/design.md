@@ -46,51 +46,106 @@ Phase 1 として、Craig (録音 Bot) + Whisper (ローカル文字起こし) +
 
 ## 4. Architecture
 
+### システム全体
+
+```mermaid
+flowchart TB
+    subgraph Discord
+        User["User"]
+        VC["Voice Channel"]
+        TC["Text Channel"]
+    end
+
+    subgraph GCP["Google Cloud"]
+        subgraph GCE["GCE: Discord Bot"]
+            Bot["Pycord Bot<br/>(Gateway + Voice)"]
+        end
+
+        CT["Cloud Tasks<br/>(非同期ジョブ)"]
+        CS["Cloud Scheduler<br/>(定期リマインド)"]
+
+        subgraph CR["Cloud Run: Agent API"]
+            API["FastAPI"]
+            ADK["ADK Agent<br/>Gemini 2.5 Pro"]
+        end
+
+        subgraph AI["Google Cloud AI"]
+            STT["Speech-to-Text API"]
+            Gemini["Gemini API"]
+        end
+
+        subgraph Data["データストア"]
+            GCS[("Cloud Storage<br/>音声ファイル")]
+            FS[("Firestore<br/>議事録 / アクション / メモリ")]
+        end
+    end
+
+    User -- "/join /stop" --> Bot
+    User -- "/ask /actions" --> API
+    Bot -- "録音 wav" --> GCS
+    Bot -- "enqueue" --> CT
+    CT -- "HTTP" --> API
+    CS -- "HTTP" --> API
+    API --> ADK
+    ADK --> STT
+    ADK --> Gemini
+    ADK -- "read/write" --> FS
+    ADK -- "Webhook" --> TC
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Google Cloud                                               │
-│                                                             │
-│  ┌─ GCE ─────────────────────────┐                         │
-│  │  Discord Bot (Pycord)          │                         │
-│  │  ├── Gateway 接続 (WebSocket)  │                         │
-│  │  ├── Voice Recording           │                         │
-│  │  │   └── 話者別 wav 出力       │                         │
-│  │  ├── Slash Commands            │                         │
-│  │  │   /join /stop /ask /actions │                         │
-│  │  └── Event Handler             │                         │
-│  │      └── 全員退出検知 → 自動停止│                         │
-│  └──────────────┬────────────────┘                         │
-│                 │ HTTP (録音完了 / コマンド)                  │
-│                 ▼                                           │
-│  ┌─ Cloud Tasks ────────────────┐                          │
-│  │  非同期ジョブキュー            │                          │
-│  └──────────────┬───────────────┘                          │
-│                 ▼                                           │
-│  ┌─ Cloud Run ──────────────────────────────────┐          │
-│  │  Agent API (FastAPI)                          │          │
-│  │                                               │          │
-│  │  ADK Agent (Gemini 2.5 Pro)                   │          │
-│  │  ├── transcribe   → Speech-to-Text API        │          │
-│  │  ├── generate     → Gemini API                │          │
-│  │  ├── extract      → Gemini API                │          │
-│  │  ├── search       → Firestore                 │          │
-│  │  ├── get_actions  → Firestore                 │          │
-│  │  └── notify       → Discord Webhook           │          │
-│  │                                               │          │
-│  │  Memory: Firestore (ADK built-in)             │          │
-│  └──────────────────────────────────────────────┘          │
-│                                                             │
-│  ┌─ Cloud Scheduler ───────────┐                           │
-│  │  定期: アクションアイテム      │                           │
-│  │  期限チェック → リマインド通知  │                           │
-│  └─────────────────────────────┘                           │
-│                                                             │
-│  ┌─ Cloud Storage ─────────────┐  ┌─ Firestore ─────────┐ │
-│  │  音声ファイル (wav)           │  │  meetings/           │ │
-│  │  gs://minutes-agent-audio/   │  │  action_items/       │ │
-│  └─────────────────────────────┘  │  adk-session/        │ │
-│                                    └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+
+### 議事録生成フロー
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Bot as Discord Bot<br/>(GCE)
+    participant GCS as Cloud Storage
+    participant CT as Cloud Tasks
+    participant Agent as ADK Agent<br/>(Cloud Run)
+    participant STT as Speech-to-Text
+    participant Gemini as Gemini API
+    participant FS as Firestore
+    participant DC as Discord Channel
+
+    User->>Bot: /join
+    Bot->>Bot: Voice Channel 参加・録音開始
+    Bot-->>User: 録音を開始しました
+
+    Note over Bot: 会議進行中...
+
+    User->>Bot: /stop (or 全員退出)
+    Bot->>GCS: 話者別 wav アップロード
+    Bot->>CT: 議事録生成ジョブ enqueue
+    Bot-->>User: 議事録を作成中です...
+
+    CT->>Agent: HTTP POST /tasks/generate-minutes
+    Agent->>GCS: 音声ファイル取得
+    Agent->>STT: 文字起こし (話者別)
+    STT-->>Agent: タイムスタンプ付きテキスト
+    Agent->>Agent: 時系列統合
+    Agent->>Gemini: 議事録生成
+    Gemini-->>Agent: 議事録 (Markdown)
+    Agent->>Gemini: アクションアイテム抽出
+    Gemini-->>Agent: アクションアイテム一覧
+    Agent->>FS: 議事録・アクションアイテム保存
+    Agent->>DC: Webhook で議事録投稿
+```
+
+### Between-Meetings 自律動作
+
+```mermaid
+sequenceDiagram
+    participant CS as Cloud Scheduler
+    participant Agent as ADK Agent<br/>(Cloud Run)
+    participant FS as Firestore
+    participant DC as Discord Channel
+
+    CS->>Agent: 定期実行 (毎日 10:00)
+    Agent->>FS: 未完了アクションアイテム取得
+    Agent->>Agent: 期限超過・期限間近を判定
+    alt 通知対象あり
+        Agent->>DC: リマインド通知
+    end
 ```
 
 ### なぜこの構成か
