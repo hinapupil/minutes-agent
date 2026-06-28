@@ -1,0 +1,47 @@
+#!/bin/bash
+set -euo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+if ! command -v docker >/dev/null 2>&1; then
+  apt-get update
+  apt-get install -y docker.io curl python3
+  systemctl enable --now docker
+fi
+
+ACCESS_TOKEN="$(curl -fsS -H 'Metadata-Flavor: Google' \
+  'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token' \
+  | python3 -c "import json,sys; print(json.load(sys.stdin)['access_token'])")"
+
+read_secret() {
+  local secret_id="$1"
+  curl -fsS \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    "https://secretmanager.googleapis.com/v1/projects/${project_id}/secrets/$secret_id/versions/latest:access" \
+    | python3 -c "import base64,json,sys; print(base64.b64decode(json.load(sys.stdin)['payload']['data']).decode())"
+}
+
+DISCORD_BOT_TOKEN="$(read_secret '${discord_bot_token_secret_id}')"
+DISCORD_WEBHOOK_URL="$(read_secret '${discord_webhook_url_secret_id}')"
+AGENT_API_TOKEN="$(read_secret '${agent_api_token_secret_id}')"
+
+echo "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin https://${region}-docker.pkg.dev
+
+docker pull ${bot_image}
+docker rm -f minutes-agent-bot || true
+docker run -d \
+  --name minutes-agent-bot \
+  --restart always \
+  -e DISCORD_BOT_TOKEN="$DISCORD_BOT_TOKEN" \
+  -e DISCORD_APPLICATION_ID="${discord_application_id}" \
+  -e DISCORD_CHANNEL_ID="${discord_channel_id}" \
+  -e DISCORD_WEBHOOK_URL="$DISCORD_WEBHOOK_URL" \
+  -e GOOGLE_CLOUD_PROJECT="${project_id}" \
+  -e GOOGLE_CLOUD_LOCATION="${region}" \
+  -e GCS_BUCKET_NAME="${gcs_bucket_name}" \
+  -e CLOUD_TASKS_QUEUE="${cloud_tasks_queue}" \
+  -e CLOUD_RUN_BASE_URL="${cloud_run_base_url}" \
+  -e AGENT_API_BASE_URL="${cloud_run_base_url}" \
+  -e AGENT_API_TOKEN="$AGENT_API_TOKEN" \
+  -e GEMINI_MODEL="${gemini_model}" \
+  -v /var/lib/minutes-agent:/app/data \
+  ${bot_image}
