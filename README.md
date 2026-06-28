@@ -30,7 +30,7 @@ Discord Webhook                → 結果投稿
 
 ## Tech Stack
 
-- **AI**: Gemini 2.5 Pro, Speech-to-Text API, ADK
+- **AI**: Gemini 3.5 Flash, Speech-to-Text API, ADK
 - **Compute**: Cloud Run, GCE
 - **Data**: Firestore, Cloud Storage
 - **Bot**: Pycord (Python)
@@ -40,6 +40,76 @@ Discord Webhook                → 結果投稿
 ## Documentation
 
 - [Design Document](docs/design.md)
+
+## Local Development
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+```
+
+API:
+
+```powershell
+uvicorn api.main:app --reload --port 8080
+```
+
+Discord Bot:
+
+```powershell
+python -m bot.main
+```
+
+Required environment variables are listed in `.env.example`.
+
+## App Implementation Scope
+
+- `bot/`: Pycord slash commands, voice recording, GCS upload, Cloud Tasks enqueue
+- `api/`: Cloud Run FastAPI app, Cloud Tasks handlers, Discord Interactions endpoint
+- `agent/`: ADK agent definition and tools
+- `minutes_agent/`: shared config, models, Firestore, Cloud Storage, Cloud Tasks, Discord notification, workflow
+- `infra/`: Terraform resources for Cloud Run, GCE, Firestore, GCS, Cloud Tasks, Cloud Scheduler, IAM
+
+## Verification
+
+```powershell
+ruff check .
+mypy minutes_agent api agent bot
+pytest
+```
+
+## Deployment
+
+Terraform:
+
+```powershell
+cd infra
+terraform init
+terraform apply
+```
+
+GitHub Actions:
+
+- `.github/workflows/ci.yml`: lint, type check, tests
+- `.github/workflows/deploy.yml`: build/push API and Bot images, deploy Cloud Run, restart GCE Bot
+
+Required GitHub secrets for deploy:
+
+- `GCP_PROJECT_ID`
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`
+- `GCP_DEPLOY_SERVICE_ACCOUNT`
+
+Required Secret Manager secrets:
+
+- `DISCORD_BOT_TOKEN`
+- `DISCORD_WEBHOOK_URL`
+- `AGENT_API_TOKEN`
+- `GEMINI_API_KEY` when not using Vertex AI credentials
+
+## Known Runtime Constraint
+
+Pycord 2.8.0 exposes `start_recording()` / `WaveSink`, but current Discord voice reception can be affected by DAVE end-to-end encryption. `/minutes` accepts an audio file or zip as the specified fallback path.
 
 ## License
 

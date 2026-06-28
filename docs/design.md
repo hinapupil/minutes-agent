@@ -583,7 +583,7 @@ minutes-agent/
 
 | リスク | 影響 | 緩和策 |
 |--------|------|--------|
-| Pycord voice recording が不安定 | 録音失敗 | `/minutes [zip]` の手動フォールバック。デモは安定環境で実施 |
+| Pycord voice recording が不安定 | 録音失敗 | Pycord 2.8.0 の DAVE 影響を実機確認する。`/minutes [zip]` の手動フォールバック。デモは安定環境で実施 |
 | Speech-to-Text の日本語精度 | 議事録品質低下 | Whisper のハルシネーション対策ノウハウ (VAD + パターンフィルタ) を応用。モデル選択を V2 chirp_2 に |
 | Cloud Run の cold start | `/ask` の応答遅延 | min-instances=1 で常時ウォーム。初回応答は「考え中...」表示 |
 | GCE Bot の可用性 | 録音不可 | systemd で自動再起動。Cloud Monitoring でアラート |
