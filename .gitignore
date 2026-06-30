@@ -12,6 +12,8 @@ venv/
 .env
 .env.local
 !.env.example
+.direnv/
+.devbox/
 
 *.tfstate
 *.tfstate.*
