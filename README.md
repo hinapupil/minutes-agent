@@ -37,6 +37,22 @@ Discord Webhook                → 結果投稿
 - **IaC**: Terraform
 - **CI/CD**: GitHub Actions
 
+## Development Environment
+
+Reproducible dev environment via [Devbox](https://www.jetify.com/devbox) (Python 3.12, ffmpeg,
+libopus for Pycord voice recording, [just](https://github.com/casey/just),
+[lefthook](https://github.com/evilmartians/lefthook) + [gitleaks](https://github.com/gitleaks/gitleaks)):
+
+```bash
+curl -fsSL https://get.jetify.com/devbox | bash   # installs Nix automatically if needed
+direnv allow                                       # or: devbox shell
+just setup                                         # installs deps + git hooks
+just --list                                        # see all available tasks
+```
+
+`lefthook` runs `gitleaks` on every commit and `just check` (lint + typecheck + test) on every
+push. See [AGENTS.md](AGENTS.md) for conventions and security notes.
+
 ## Documentation
 
 - [Design Document](docs/design.md)
