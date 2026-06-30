@@ -550,6 +550,8 @@ minutes-agent/
 
 ## 13. Schedule (2 weeks, 2-person team)
 
+> インフラ担当の GCP プロジェクト初期セットアップ手順は [Runbook: GCP インフラ ブートストラップ](runbook-gcp-bootstrap.md) を参照。
+
 ### Week 1: Core Pipeline
 
 | 日程 | インフラ担当 | アプリ担当 |
