@@ -40,7 +40,9 @@ docker run -d \
   -e GCS_BUCKET_NAME="${gcs_bucket_name}" \
   -e CLOUD_TASKS_QUEUE="${cloud_tasks_queue}" \
   -e CLOUD_RUN_BASE_URL="${cloud_run_base_url}" \
+  -e CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL="${cloud_tasks_service_account}" \
   -e AGENT_API_BASE_URL="${cloud_run_base_url}" \
+  -e AGENT_API_USE_OIDC="true" \
   -e AGENT_API_TOKEN="$AGENT_API_TOKEN" \
   -e GEMINI_MODEL="${gemini_model}" \
   -v /var/lib/minutes-agent:/app/data \

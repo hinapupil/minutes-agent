@@ -11,7 +11,7 @@ resource "google_cloud_scheduler_job" "check_actions" {
 
     oidc_token {
       service_account_email = google_service_account.agent.email
-      audience              = google_cloud_run_v2_service.agent.uri
+      audience              = "${google_cloud_run_v2_service.agent.uri}/tasks/check-actions"
     }
 
     headers = {
@@ -21,4 +21,3 @@ resource "google_cloud_scheduler_job" "check_actions" {
     body = base64encode("{}")
   }
 }
-

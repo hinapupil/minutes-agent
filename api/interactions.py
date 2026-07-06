@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -24,6 +26,8 @@ INTERACTION_APPLICATION_COMMAND = 2
 RESPONSE_PONG = 1
 RESPONSE_CHANNEL_MESSAGE = 4
 RESPONSE_DEFERRED_CHANNEL_MESSAGE = 5
+
+DOWNLOAD_CHUNK_BYTES = 1024 * 1024
 
 
 async def handle_interaction(
@@ -87,11 +91,9 @@ async def handle_interaction(
         attachment = _attachment_option(payload, "file")
         if attachment is None:
             return _message("file attachment が必要です", ephemeral=True)
-        target_base_url = str(request.base_url).rstrip("/")
         background_tasks.add_task(
             _enqueue_attachment_minutes,
             settings,
-            target_base_url,
             application_id,
             token,
             guild_id,
@@ -119,7 +121,6 @@ def _answer_question_followup(
 
 def _enqueue_attachment_minutes(
     settings: Settings,
-    target_base_url: str,
     application_id: str,
     token: str,
     guild_id: str,
@@ -139,7 +140,7 @@ def _enqueue_attachment_minutes(
             audio_files=audio_files,
         )
         FirestoreRepository(settings).save_meeting(meeting)
-        publisher = CloudTasksPublisher(settings, target_base_url=target_base_url)
+        publisher = CloudTasksPublisher(settings)
         task_name = publisher.enqueue_generate_minutes(
             GenerateMinutesRequest(
                 meeting_id=meeting_id,
@@ -166,8 +167,12 @@ def _download_upload_attachment(
         raise ValueError("attachment url is empty")
     storage = GcsStorage(settings)
     with tempfile.TemporaryDirectory() as temp_dir:
-        download_path = Path(temp_dir) / filename
-        urllib.request.urlretrieve(url, download_path)
+        download_path = Path(temp_dir) / _safe_attachment_filename(filename)
+        _download_attachment(
+            url,
+            download_path,
+            max_bytes=settings.interaction_attachment_max_bytes,
+        )
         paths = _expand_audio_files(download_path, Path(temp_dir) / "expanded")
         audio_files: list[AudioArtifact] = []
         for index, path in enumerate(paths, start=1):
@@ -181,7 +186,44 @@ def _download_upload_attachment(
                     gcs_uri=gcs_uri,
                 )
             )
-        return audio_files
+    return audio_files
+
+
+def _safe_attachment_filename(filename: str) -> str:
+    return Path(filename.replace("\\", "/")).name or "attachment"
+
+
+def _download_attachment(url: str, download_path: Path, *, max_bytes: int) -> None:
+    if max_bytes <= 0:
+        raise ValueError("attachment max bytes must be positive")
+    request = urllib.request.Request(url)
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            content_length = response.headers.get("Content-Length")
+            if content_length is not None:
+                try:
+                    declared_size = int(content_length)
+                except ValueError:
+                    declared_size = None
+                if declared_size is not None and declared_size > max_bytes:
+                    raise ValueError("attachment too large")
+            _write_limited_response(response, download_path, max_bytes=max_bytes)
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"attachment download returned HTTP {exc.code}: {exc.read()!r}") from exc
+
+
+def _write_limited_response(response: Any, download_path: Path, *, max_bytes: int) -> None:
+    download_path.parent.mkdir(parents=True, exist_ok=True)
+    total = 0
+    with download_path.open("wb") as file:
+        while True:
+            chunk = response.read(min(DOWNLOAD_CHUNK_BYTES, max_bytes - total + 1))
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > max_bytes:
+                raise ValueError("attachment too large")
+            file.write(chunk)
 
 
 def _expand_audio_files(path: Path, output_dir: Path) -> list[Path]:
@@ -192,7 +234,7 @@ def _expand_audio_files(path: Path, output_dir: Path) -> list[Path]:
         return [path]
     output_dir.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(path) as archive:
-        archive.extractall(output_dir)
+        _extract_zip_safely(archive, output_dir)
     audio_files = [
         child
         for child in output_dir.rglob("*")
@@ -201,6 +243,20 @@ def _expand_audio_files(path: Path, output_dir: Path) -> list[Path]:
     if not audio_files:
         raise ValueError("zip did not contain supported audio files")
     return audio_files
+
+
+def _extract_zip_safely(archive: zipfile.ZipFile, output_dir: Path) -> None:
+    root = output_dir.resolve()
+    for member in archive.infolist():
+        target = (output_dir / member.filename).resolve()
+        if not target.is_relative_to(root):
+            raise ValueError("zip contains unsafe path")
+        if member.is_dir():
+            target.mkdir(parents=True, exist_ok=True)
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with archive.open(member) as source, target.open("wb") as destination:
+            shutil.copyfileobj(source, destination)
 
 
 def _option_value(payload: dict[str, Any], name: str) -> Any:

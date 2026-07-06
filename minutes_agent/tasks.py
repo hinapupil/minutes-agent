@@ -43,7 +43,8 @@ class CloudTasksPublisher:
         }
         if self._settings.cloud_tasks_service_account_email:
             http_request["oidc_token"] = {
-                "service_account_email": self._settings.cloud_tasks_service_account_email
+                "service_account_email": self._settings.cloud_tasks_service_account_email,
+                "audience": url,
             }
         if self._settings.agent_api_token:
             http_request["headers"] = {

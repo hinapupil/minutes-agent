@@ -30,6 +30,7 @@ resource "google_compute_instance" "bot" {
     gcs_bucket_name               = google_storage_bucket.audio.name
     cloud_tasks_queue             = google_cloud_tasks_queue.minutes.name
     cloud_run_base_url            = google_cloud_run_v2_service.agent.uri
+    cloud_tasks_service_account   = google_service_account.agent.email
     discord_application_id        = var.discord_application_id
     discord_channel_id            = var.discord_channel_id
     discord_bot_token_secret_id   = var.discord_bot_token_secret_id
@@ -41,5 +42,6 @@ resource "google_compute_instance" "bot" {
   depends_on = [
     google_artifact_registry_repository.containers,
     google_cloud_run_v2_service.agent,
+    google_cloud_run_v2_service.interactions,
   ]
 }

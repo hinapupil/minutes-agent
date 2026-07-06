@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
 from minutes_agent.config import Settings
 from minutes_agent.models import ActionItem, MeetingRecord
+
+DISCORD_CONTENT_LIMIT = 2000
+DISCORD_TRUNCATION_SUFFIX = "..."
 
 
 def verify_discord_signature(public_key: str, timestamp: str, signature: str, body: bytes) -> bool:
@@ -75,9 +79,10 @@ class DiscordNotifier:
                 assignee = item.assignee or "担当者未設定"
                 due = item.due_date.date().isoformat() if item.due_date else "期限未設定"
                 lines.append(f"- `{item.action_id}` {item.title} / {assignee} / {due}")
-        return "\n".join(lines)
+        return _truncate_discord_content("\n".join(lines))
 
     def _post_json(self, url: str, payload: dict[str, Any]) -> None:
+        payload = _with_truncated_content(payload)
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         request = urllib.request.Request(
             url,
@@ -85,7 +90,24 @@ class DiscordNotifier:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(request, timeout=30) as response:
-            if response.status >= 400:
-                raise RuntimeError(f"Discord API returned HTTP {response.status}")
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                response.read()
+        except urllib.error.HTTPError as exc:
+            raise RuntimeError(f"Discord API returned HTTP {exc.code}: {exc.read()!r}") from exc
 
+
+def _with_truncated_content(payload: dict[str, Any]) -> dict[str, Any]:
+    content = payload.get("content")
+    if not isinstance(content, str):
+        return payload
+    updated = dict(payload)
+    updated["content"] = _truncate_discord_content(content)
+    return updated
+
+
+def _truncate_discord_content(content: str) -> str:
+    if len(content) <= DISCORD_CONTENT_LIMIT:
+        return content
+    limit = DISCORD_CONTENT_LIMIT - len(DISCORD_TRUNCATION_SUFFIX)
+    return f"{content[:limit]}{DISCORD_TRUNCATION_SUFFIX}"

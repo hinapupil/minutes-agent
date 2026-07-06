@@ -11,7 +11,8 @@ GCE: Discord Bot (Pycord)     → Voice Recording
          ↓
 Cloud Tasks                    → 非同期ジョブ
          ↓
-Cloud Run: ADK Agent (Gemini)  → Speech-to-Text + 議事録生成
+Cloud Run: Agent API           → Speech-to-Text + 議事録生成
+Cloud Run: Interactions        → Discord slash command webhook
          ↓
 Firestore + Cloud Storage      → データ永続化
          ↓
@@ -88,6 +89,8 @@ cd infra
 terraform init
 terraform apply
 ```
+
+Terraform outputs `discord_interactions_url`. Set that value as the Discord Interactions endpoint.
 
 GitHub Actions:
 

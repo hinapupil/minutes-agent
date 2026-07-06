@@ -11,6 +11,7 @@ env:
   API_IMAGE: api
   BOT_IMAGE: bot
   CLOUD_RUN_SERVICE: minutes-agent-api
+  INTERACTIONS_CLOUD_RUN_SERVICE: minutes-agent-interactions
   GCE_INSTANCE: minutes-agent-bot
   GCE_ZONE: asia-northeast1-a
 
@@ -57,6 +58,14 @@ jobs:
       - name: Deploy Cloud Run API
         run: |
           gcloud run deploy "$CLOUD_RUN_SERVICE" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --region "$REGION" \
+            --image "$API_IMAGE_URI" \
+            --quiet
+
+      - name: Deploy Cloud Run Interactions
+        run: |
+          gcloud run deploy "$INTERACTIONS_CLOUD_RUN_SERVICE" \
             --project "${{ secrets.GCP_PROJECT_ID }}" \
             --region "$REGION" \
             --image "$API_IMAGE_URI" \

@@ -1,6 +1,11 @@
 output "cloud_run_url" {
   value       = google_cloud_run_v2_service.agent.uri
-  description = "Cloud Run Agent API URL"
+  description = "Internal Cloud Run Agent API URL"
+}
+
+output "discord_interactions_url" {
+  value       = "${google_cloud_run_v2_service.interactions.uri}/interactions"
+  description = "Public Discord Interactions endpoint URL"
 }
 
 output "gce_instance_name" {
@@ -17,4 +22,3 @@ output "artifact_registry_repository" {
   value       = google_artifact_registry_repository.containers.name
   description = "Artifact Registry repository"
 }
-

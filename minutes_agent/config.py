@@ -19,6 +19,20 @@ def _env_list(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(item.strip() for item in value.split(",") if item.strip())
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = _env(name)
+    if value is None:
+        return default
+    return value.lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int) -> int:
+    value = _env(name)
+    if value is None:
+        return default
+    return int(value)
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     discord_bot_token: str | None = field(default_factory=lambda: _env("DISCORD_BOT_TOKEN"))
@@ -72,6 +86,15 @@ class Settings:
         or "http://localhost:8080"
     )
     agent_api_token: str | None = field(default_factory=lambda: _env("AGENT_API_TOKEN"))
+    agent_api_use_oidc: bool = field(
+        default_factory=lambda: _env_bool("AGENT_API_USE_OIDC", False)
+    )
+    route_profile: str = field(
+        default_factory=lambda: _env("MINUTES_AGENT_ROUTE_PROFILE", "all") or "all"
+    )
+    interaction_attachment_max_bytes: int = field(
+        default_factory=lambda: _env_int("INTERACTION_ATTACHMENT_MAX_BYTES", 200 * 1024 * 1024)
+    )
     local_recordings_dir: Path = field(
         default_factory=lambda: Path(
             _env("LOCAL_RECORDINGS_DIR", "data/recordings") or "data/recordings"

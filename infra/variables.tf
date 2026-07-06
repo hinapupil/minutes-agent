@@ -45,6 +45,12 @@ variable "cloud_run_service_name" {
   default     = "minutes-agent-api"
 }
 
+variable "interactions_cloud_run_service_name" {
+  type        = string
+  description = "Public Cloud Run service name for Discord Interactions"
+  default     = "minutes-agent-interactions"
+}
+
 variable "gce_instance_name" {
   type        = string
   description = "GCE instance name for the Discord bot"
