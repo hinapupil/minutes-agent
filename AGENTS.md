@@ -7,7 +7,7 @@ direnv allow   # or: devbox shell
 just setup     # install dependencies and git hooks
 just dev-api   # start the Cloud Run API locally
 just dev-bot   # start the Discord bot locally
-just check     # lint + typecheck + test (CI runs this)
+just check     # lint + typecheck + test (full local check)
 ```
 
 Devbox provides a reproducible dev environment (Python 3.12, ffmpeg, libopus
@@ -46,5 +46,5 @@ See [docs/design.md](docs/design.md) for the full design.
 
 ```bash
 just test            # pytest + unittest discover
-just check           # lint + typecheck + test — what CI runs
+just check           # lint + typecheck + test — full local check (CI wiring is a follow-up)
 ```

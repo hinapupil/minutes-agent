@@ -5,7 +5,7 @@
 
 # Install dependencies and set up git hooks
 setup:
-    pip install -e ".[dev]"
+    @if [ -f pyproject.toml ]; then pip install -e ".[dev]"; else echo "pyproject.toml not found — skipping pip install until app code (PR #1) lands"; fi
     lefthook install
 
 # Start the Cloud Run API locally
@@ -32,5 +32,5 @@ test:
 fmt:
     ruff format .
 
-# Check all (lint + typecheck + test) — used by CI
+# Check all (lint + typecheck + test) — full local check
 check: lint typecheck test
