@@ -1,6 +1,13 @@
 terraform {
   required_version = ">= 1.7.0"
 
+  # state バケットは Runbook (docs/runbooks/gcp-bootstrap.md Phase 5) で
+  # Terraform 管理外として事前作成済み（バージョニング有効）
+  backend "gcs" {
+    bucket = "minutes-agent-hackathon-tfstate"
+    prefix = "minutes-agent"
+  }
+
   required_providers {
     google = {
       source  = "hashicorp/google"
