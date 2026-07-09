@@ -102,6 +102,20 @@ Design Doc: [docs/design.md](../design.md) ／ 関連 issue: [#7](https://github
 | Webhook | `#一般` に `Minutes Agent` 名で作成済み（URL の Secret Manager 投入は下記残作業） |
 | MiyaIF 招待リンク | `https://discord.gg/tkZ9uBhDE`（30日有効） |
 
+**追記（同日）: 2アプリ分離（[ADR-0002](../adr/0002-split-discord-apps-for-gateway-and-interactions.md)）に伴う Interactions 用アプリの作成:**
+
+| 項目 | 値・状態 |
+|---|---|
+| アプリ | `minutes-interactions`（新規作成。作成時に hCaptcha が出るため人間の操作が必要だった） |
+| `interactions_discord_application_id` | `1524735297114603591` |
+| `interactions_discord_public_key` | `da54897b79b8693e8c0f9df2fda9e3794b2ad5a1557f35ef3113bc3989ceb315` |
+| ギルド認可 | `applications.commands` スコープのみでデモサーバーに認可済み（Gateway 接続しないため Bot 招待・Intents 不要） |
+| Interactions Endpoint URL | **未設定**。Cloud Run デプロイ後に `terraform output -raw discord_interactions_url` の値を設定する（PING 検証あり） |
+| コマンド登録 | デプロイ後に `python -m minutes_agent.discord_commands --guild-id 1524716458670817382` で登録（このアプリの Bot トークンが必要 → リセットして `just secret-set discord-interactions-bot-token`） |
+
+> [!NOTE]
+> 録音 Bot 用 `minutes-bot` には Interactions Endpoint URL を**設定しない**（設定すると `/join` `/stop` が Gateway に届かなくなる）。詳細な分離方針は [docs/discord-setup.md](../discord-setup.md)（PR #12、MiyaIF）と ADR-0002 を参照。
+
 **残作業（秘密情報のためユーザー本人が実施）:**
 - [ ] Bot トークンのリセットと投入: Portal の Bot ページで「トークンをリセット」→ `just secret-set discord-bot-token`
   - 既存トークンは無効化される。このアプリは別サーバーに1件インストール済みのため、もし旧トークンで動いているプロセスがあれば止まる点に注意
