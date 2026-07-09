@@ -7,7 +7,7 @@ Discord の定例ミーティングにおける **会議のアカウンタビリ
 Bot が自ら voice channel に参加して録音し、文字起こし→議事録生成→アクションアイテム抽出→Discord 投稿までを全自動で行う。さらに、会議と会議の間（between-meetings）でアクションアイテムの追跡・リマインド・過去議事録の横断検索を自律的に実行する。
 
 **ハッカソン**: [DevOps × AI Agent Hackathon](https://findy.co.jp/4127/) (Findy × Google Cloud)
-**提出期限**: 2026-07-10
+**提出期限**: 2026-07-12（当初 7/10 から延長。運営アナウンス 2026-07-08）
 
 ## 2. Problem Statement
 
@@ -215,6 +215,15 @@ Cloud Run 上で動く HTTP API。Bot からの非同期ジョブ受信と、Dis
 - `/ask` `/actions` は voice 不要 → Cloud Run で直接応答可能
 - GCE Bot が落ちていても対話コマンドは動く（可用性向上）
 - 「デプロイ済み URL」として審査で動作確認可能
+
+**Discord アプリは2つに分離する**（[ADR-0002](adr/0002-split-discord-apps-for-gateway-and-interactions.md)）:
+
+Discord の仕様上、Interactions Endpoint URL を設定したアプリは全コマンドが HTTP に送られ Gateway に届かなくなるため、単一アプリでの併用は不可能。以下の2アプリ構成とする。
+
+| アプリ | 責務 | コマンド |
+|--------|------|----------|
+| 録音 Bot 用（`minutes-bot`） | GCE で Gateway 接続・voice 録音。Endpoint URL は設定しない | `/join` `/stop` |
+| Interactions 用（`minutes-interactions`） | Cloud Run `/interactions` で HTTP 応答。Gateway 接続なし | `/minutes` `/ask` `/actions` `/action-done` |
 
 ### 5.3 ADK Agent
 
@@ -524,10 +533,10 @@ minutes-agent/
 
 | 提出物 | 内容 | 期限 |
 |--------|------|------|
-| **GitHub リポジトリ** (公開) | このリポジトリ | 7/10 |
-| **デプロイ済み URL** | Cloud Run Agent API | 7/10 (7/17 まで維持) |
-| **Proto Pedia 登録** | 下記参照 | 7/10 |
-| **作品提出フォーム** | Google Form | 7/10 |
+| **GitHub リポジトリ** (公開) | このリポジトリ | 7/12 |
+| **デプロイ済み URL** | Cloud Run Agent API | 7/12 (7/17 まで維持) |
+| **Proto Pedia 登録** | 下記参照 | 7/12 |
+| **作品提出フォーム** | Google Form | 7/12 |
 
 ### Proto Pedia 登録内容
 
@@ -550,7 +559,7 @@ minutes-agent/
 
 ## 13. Schedule (2 weeks, 2-person team)
 
-> インフラ担当の GCP プロジェクト初期セットアップ手順は [Runbook: GCP インフラ ブートストラップ](runbooks/gcp-bootstrap.md)、GitHub リポジトリ側の手動設定は [Runbook: GitHub リポジトリ設定](runbooks/github-repo-setup.md) を参照。Architecture Decision Record は [docs/adr/](adr/) を参照。
+> インフラ担当の GCP プロジェクト初期セットアップ手順は [Runbook: GCP インフラ ブートストラップ](runbooks/gcp-bootstrap.md)、GitHub リポジトリ側の手動設定は [Runbook: GitHub リポジトリ設定](runbooks/github-repo-setup.md)、Discord サーバー・アプリの設定は [Runbook: Discord 設定](runbooks/discord-setup.md) を参照。Architecture Decision Record は [docs/adr/](adr/) を参照。
 
 ### Week 1: Core Pipeline
 
@@ -574,9 +583,9 @@ minutes-agent/
 | **7/7 (月)** | アーキテクチャ図清書 | デモ動画撮影 |
 | **7/8 (火)** | Proto Pedia 登録 | デモ動画編集・アップロード |
 | **7/9 (水)** | 最終テスト、デプロイ確認 | 作品提出フォーム記入 |
-| **7/10 (木)** | **提出** | **提出** |
+| **7/10 (木)** | **提出**（→ 7/12 に延長） | **提出**（→ 7/12 に延長） |
 
-### 7/10 以降
+### 7/12（延長後締切）以降
 
 - デプロイ済み環境を **7/17 まで維持**（一次審査期間）
 - 二次審査 (7/21-7/24) まで維持が望ましい

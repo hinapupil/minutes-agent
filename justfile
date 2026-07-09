@@ -45,6 +45,7 @@ gcp_project := "minutes-agent-hackathon"
 secret-set name:
     #!/usr/bin/env bash
     set -euo pipefail
+    echo "Secret Manager の {{name}} を確認中...（gcloud の応答に1分以上かかることがあります）"
     gcloud secrets describe "{{name}}" --project "{{gcp_project}}" >/dev/null 2>&1 \
       || gcloud secrets create "{{name}}" --project "{{gcp_project}}" --replication-policy=automatic
     read -r -s -p "{{name}} の値を入力（表示されません）: " value; echo
@@ -56,6 +57,7 @@ secret-set name:
 secret-gen-agent-token:
     #!/usr/bin/env bash
     set -euo pipefail
+    echo "Secret Manager の agent-api-token を確認中...（gcloud の応答に1分以上かかることがあります）"
     gcloud secrets describe agent-api-token --project "{{gcp_project}}" >/dev/null 2>&1 \
       || gcloud secrets create agent-api-token --project "{{gcp_project}}" --replication-policy=automatic
     openssl rand -hex 32 | tr -d '\n' \
