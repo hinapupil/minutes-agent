@@ -23,3 +23,42 @@ jobs:
       - name: Tests
         run: python -m unittest discover -s tests
 
+  # 秘密情報の混入検知（ローカルの lefthook pre-commit と同じ gitleaks を CI でも強制）
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 全履歴を走査するため
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 依存パッケージの既知脆弱性検査（npm audit の Python 版。OSV.dev + PyPI Advisory DB を参照）
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+      - uses: pypa/gh-action-pip-audit@v1.1.0
+        with:
+          # インストール済み環境を監査（requirements.txt は下限指定のみで実解決が環境依存のため）
+          no-deps: false
+
+  # Terraform のセキュリティ/ベストプラクティス検査（hard-fail 運用。
+  # 意図的に満たさない項目は infra/*.tf のインライン #checkov:skip= に理由を明記する）
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra/
+          quiet: true
+          framework: terraform
