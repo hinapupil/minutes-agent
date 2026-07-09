@@ -1,0 +1,79 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGION: asia-northeast1
+  REPOSITORY: minutes-agent
+  API_IMAGE: api
+  BOT_IMAGE: bot
+  CLOUD_RUN_SERVICE: minutes-agent-api
+  INTERACTIONS_CLOUD_RUN_SERVICE: minutes-agent-interactions
+  GCE_INSTANCE: minutes-agent-bot
+  GCE_ZONE: asia-northeast1-a
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push API
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPOSITORY}/${API_IMAGE}:${GITHUB_SHA}"
+          LATEST="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPOSITORY}/${API_IMAGE}:latest"
+          docker build -f Dockerfile -t "$IMAGE" .
+          docker tag "$IMAGE" "$LATEST"
+          docker push "$IMAGE"
+          docker push "$LATEST"
+          echo "API_IMAGE_URI=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Build and push Bot
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPOSITORY}/${BOT_IMAGE}:${GITHUB_SHA}"
+          LATEST="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPOSITORY}/${BOT_IMAGE}:latest"
+          docker build -f Dockerfile.bot -t "$IMAGE" .
+          docker tag "$IMAGE" "$LATEST"
+          docker push "$IMAGE"
+          docker push "$LATEST"
+          echo "BOT_IMAGE_URI=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy Cloud Run API
+        run: |
+          gcloud run deploy "$CLOUD_RUN_SERVICE" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --region "$REGION" \
+            --image "$API_IMAGE_URI" \
+            --quiet
+
+      - name: Deploy Cloud Run Interactions
+        run: |
+          gcloud run deploy "$INTERACTIONS_CLOUD_RUN_SERVICE" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --region "$REGION" \
+            --image "$API_IMAGE_URI" \
+            --quiet
+
+      - name: Update GCE Bot
+        run: |
+          gcloud compute instances reset "$GCE_INSTANCE" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --zone "$GCE_ZONE" \
+            --quiet
