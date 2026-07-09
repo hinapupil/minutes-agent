@@ -145,11 +145,11 @@ resource "google_cloud_run_v2_service" "interactions" {
       }
       env {
         name  = "DISCORD_APPLICATION_ID"
-        value = var.discord_application_id
+        value = var.interactions_discord_application_id
       }
       env {
         name  = "DISCORD_PUBLIC_KEY"
-        value = var.discord_public_key
+        value = var.interactions_discord_public_key
       }
       env {
         name  = "DISCORD_CHANNEL_ID"
