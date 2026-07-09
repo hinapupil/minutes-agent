@@ -41,6 +41,7 @@ Discord Webhook                → 結果投稿
 ## Documentation
 
 - [Design Document](docs/design.md)
+- [Discord Application Setup](docs/discord-setup.md)
 
 ## Local Development
 
@@ -91,6 +92,7 @@ terraform apply
 ```
 
 Terraform outputs `discord_interactions_url`. Set that value as the Discord Interactions endpoint.
+See [Discord Application Setup](docs/discord-setup.md) before setting the endpoint URL. Discord sends interactions either through Gateway or through the endpoint URL, so the recording Bot commands and Cloud Run interaction commands should use separate Discord applications.
 
 GitHub Actions:
 

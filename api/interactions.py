@@ -67,6 +67,8 @@ async def handle_interaction(
             settings,
             application_id,
             token,
+            guild_id,
+            channel_id,
             question,
         )
         return {"type": RESPONSE_DEFERRED_CHANNEL_MESSAGE}
@@ -109,11 +111,17 @@ def _answer_question_followup(
     settings: Settings,
     application_id: str,
     token: str,
+    guild_id: str,
+    channel_id: str,
     question: str,
 ) -> None:
     notifier = DiscordNotifier(settings)
     try:
-        answer = MinutesWorkflow(settings).answer_question(question)
+        answer = MinutesWorkflow(settings).answer_question(
+            question,
+            user_id=_discord_user_id(guild_id),
+            session_id=_ask_session_id(guild_id, channel_id),
+        )
     except Exception as exc:
         answer = f"質問処理に失敗しました: {exc}"
     notifier.send_interaction_followup(application_id, token, answer)
@@ -292,3 +300,11 @@ def _format_actions(actions: list[Any]) -> str:
         assignee = item.assignee or "担当者未設定"
         lines.append(f"- `{item.action_id}` {item.title} / {assignee} / {due}")
     return "\n".join(lines)
+
+
+def _discord_user_id(guild_id: str) -> str:
+    return f"discord-guild:{guild_id or 'dm'}"
+
+
+def _ask_session_id(guild_id: str, channel_id: str) -> str:
+    return f"ask:{guild_id or 'dm'}:{channel_id or 'unknown'}"
