@@ -550,7 +550,7 @@ minutes-agent/
 
 ## 13. Schedule (2 weeks, 2-person team)
 
-> インフラ担当の GCP プロジェクト初期セットアップ手順は [Runbook: GCP インフラ ブートストラップ](runbooks/gcp-bootstrap.md)、GitHub リポジトリ側の手動設定は [Runbook: GitHub リポジトリ設定](runbooks/github-repo-setup.md) を参照。Architecture Decision Record は [docs/adr/](adr/) を参照。
+> インフラ担当の GCP プロジェクト初期セットアップ手順は [Runbook: GCP インフラ ブートストラップ](runbooks/gcp-bootstrap.md)、GitHub リポジトリ側の手動設定は [Runbook: GitHub リポジトリ設定](runbooks/github-repo-setup.md)、Discord サーバー・アプリの設定は [Runbook: Discord 設定](runbooks/discord-setup.md) を参照。Architecture Decision Record は [docs/adr/](adr/) を参照。
 
 ### Week 1: Core Pipeline
 
