@@ -1,6 +1,8 @@
 resource "google_cloud_run_v2_service" "agent" {
   name     = var.cloud_run_service_name
   location = var.region
+  # ハッカソン環境: 審査後の撤収(destroy)と失敗リビジョンの置き換えを可能にする
+  deletion_protection = false
 
   template {
     service_account                  = google_service_account.agent.email
@@ -101,6 +103,8 @@ resource "google_cloud_run_v2_service" "agent" {
 resource "google_cloud_run_v2_service" "interactions" {
   name     = var.interactions_cloud_run_service_name
   location = var.region
+  # ハッカソン環境: 審査後の撤収(destroy)と失敗リビジョンの置き換えを可能にする
+  deletion_protection = false
 
   template {
     service_account                  = google_service_account.agent.email
