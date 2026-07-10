@@ -1,0 +1,21 @@
+# 依存の脆弱性アラートと更新 PR の自動作成
+# セキュリティアップデートは即時、通常更新は週次でまとめる
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Tokyo"
+    groups:
+      # 通常更新はまとめて1本のPRに（レビュー負荷を下げる。セキュリティ更新は別枠で即時）
+      python-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Tokyo"

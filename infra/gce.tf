@@ -1,4 +1,6 @@
 resource "google_compute_instance" "bot" {
+  #checkov:skip=CKV_GCP_38:ブートディスクは Google 管理鍵で暗号化済み。CSEK/CMEK の鍵運用はハッカソンのスコープ外
+  #checkov:skip=CKV_GCP_40:Discord Gateway への常時 egress に外部 IP が必要。Cloud NAT 化は将来課題（受信側は GCP デフォルト firewall で保護）
   name         = var.gce_instance_name
   zone         = var.zone
   machine_type = "e2-small"
@@ -14,6 +16,18 @@ resource "google_compute_instance" "bot" {
   network_interface {
     network = "default"
     access_config {}
+  }
+
+  # CKV_GCP_32: プロジェクト共通 SSH 鍵でのログインを遮断（メンテは OS Login / IAP 経由を想定）
+  metadata = {
+    block-project-ssh-keys = "true"
+  }
+
+  # CKV_GCP_39: Shielded VM（ブート改ざん検知）
+  shielded_instance_config {
+    enable_secure_boot          = true
+    enable_vtpm                 = true
+    enable_integrity_monitoring = true
   }
 
   service_account {
