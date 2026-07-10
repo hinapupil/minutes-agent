@@ -9,8 +9,7 @@ Design Doc: [docs/design.md](../design.md) ／ 関連 issue: [#7](https://github
 >
 > | 値 | 秘密度 | 行き先 |
 > |---|---|---|
-> | `application_id` | 公開情報 | `terraform.tfvars` |
-> | `public_key` | 公開情報（署名検証用の公開鍵） | `terraform.tfvars` |
+> | `application_id` / `public_key`（**2アプリ分**、ADR-0002） | 公開情報（public_key は署名検証用の公開鍵） | `terraform.tfvars` |
 > | `channel_id` | 公開情報 | `terraform.tfvars` |
 > | Bot token | **秘密** | Secret Manager（`just secret-set discord-bot-token`） |
 > | Webhook URL | **秘密** | Secret Manager（`just secret-set discord-webhook-url`） |
@@ -31,16 +30,21 @@ Design Doc: [docs/design.md](../design.md) ／ 関連 issue: [#7](https://github
 **確認:**
 - [ ] テキストチャンネル 1（議事録投稿先）、ボイスチャンネル 1（録音対象）が存在する
 
-## Phase 2: アプリケーションの作成（3分）
+## Phase 2: アプリケーションの作成（5分）
+
+[ADR-0002](../adr/0002-split-discord-apps-for-gateway-and-interactions.md) により**アプリは2つ**作成する（録音Bot用 + Interactions用）。
 
 **手順（https://discord.com/developers/applications）:**
-- [ ] 右上「New Application」→ 名前を入力（例: `Minutes Agent`）→ 利用規約に同意して作成
+- [ ] 右上「New Application」→ **録音Bot用**アプリを作成（例: `minutes-bot`）→ 利用規約に同意して作成
 - [ ] **General Information** ページで以下をコピーし、`infra/terraform.tfvars` 用に控える:
   - [ ] `APPLICATION ID` → `discord_application_id`
   - [ ] `PUBLIC KEY` → `discord_public_key`
+- [ ] 同様に **Interactions 用**アプリを作成（例: `minutes-interactions`）し、同ページの値を控える:
+  - [ ] `APPLICATION ID` → `interactions_discord_application_id`
+  - [ ] `PUBLIC KEY` → `interactions_discord_public_key`
 
 > [!WARNING]
-> **Interactions Endpoint URL は設定しない**（issue #11 の決定まで）。設定すると Discord は全スラッシュコマンドを Gateway ではなくその URL に送るため、`/join` `/stop` が GCE Bot に届かず録音機能が壊れる。全コマンドは Bot の Gateway 接続経由で動く（Bot 側 Cog に 6 コマンドすべて実装済み）。
+> **録音Bot用アプリには Interactions Endpoint URL を設定しない**（ADR-0002 / issue #11）。設定すると Discord は全スラッシュコマンドを Gateway ではなくその URL に送るため、`/join` `/stop` が GCE Bot に届かず録音機能が壊れる。Endpoint URL を設定するのは **Interactions 用アプリだけ**（Cloud Run デプロイ後、Phase 6 参照）。
 
 ## Phase 3: Bot の設定（3分）
 
@@ -81,7 +85,10 @@ Design Doc: [docs/design.md](../design.md) ／ 関連 issue: [#7](https://github
 
 - [ ] `agent-api-token` を自動生成・投入（未実施なら）: `just secret-gen-agent-token`
 - [ ] `gcloud secrets list --project=minutes-agent-hackathon` で 3 シークレット（`discord-bot-token` / `discord-webhook-url` / `agent-api-token`）の存在を確認
-- [ ] `infra/terraform.tfvars` に公開値 3 つ（`discord_application_id` / `discord_public_key` / `discord_channel_id`）を反映 → [Runbook: GCP ブートストラップ Phase 6](gcp-bootstrap.md) と issue #4 へ続く
+- [ ] `infra/terraform.tfvars` に公開値 **5 つ**を反映 → [Runbook: GCP ブートストラップ Phase 6](gcp-bootstrap.md) と issue #4 へ続く:
+  - 録音Bot用: `discord_application_id` / `discord_public_key`
+  - Interactions用: `interactions_discord_application_id` / `interactions_discord_public_key`（いずれも必須変数。未設定だと `terraform plan/apply` が失敗する）
+  - 投稿先: `discord_channel_id`
 
 ---
 

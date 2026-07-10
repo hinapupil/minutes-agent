@@ -75,12 +75,24 @@ variable "discord_channel_id" {
 
 variable "discord_application_id" {
   type        = string
-  description = "Discord application ID"
+  description = "Discord application ID (recording bot app; Gateway-connected, no endpoint URL)"
 }
 
 variable "discord_public_key" {
   type        = string
-  description = "Discord interactions public key"
+  description = "Discord public key (recording bot app)"
+}
+
+# ADR-0002: Interactions Endpoint と Gateway は同一アプリで両立しないため、
+# Cloud Run interactions サービス用に別アプリの資格情報を分離する
+variable "interactions_discord_application_id" {
+  type        = string
+  description = "Discord application ID (interactions app; receives HTTP interactions on Cloud Run)"
+}
+
+variable "interactions_discord_public_key" {
+  type        = string
+  description = "Discord public key (interactions app; used for Ed25519 signature verification)"
 }
 
 variable "discord_bot_token_secret_id" {

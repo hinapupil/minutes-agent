@@ -1,8 +1,10 @@
 project_id                       = "your-gcp-project"
 gcs_bucket_name                  = "your-minutes-agent-audio-bucket"
 discord_channel_id               = "000000000000000000"
-discord_application_id           = "000000000000000000"
-discord_public_key               = "hex-public-key"
+discord_application_id           = "000000000000000000" # 録音Bot用アプリ (ADR-0002)
+discord_public_key               = "hex-public-key"      # 録音Bot用アプリ
+interactions_discord_application_id = "000000000000000000" # Interactions用アプリ (ADR-0002)
+interactions_discord_public_key     = "hex-public-key"      # Interactions用アプリ
 discord_bot_token_secret_id      = "discord-bot-token"
 discord_webhook_url_secret_id    = "discord-webhook-url"
 gemini_api_key_secret_id         = "gemini-api-key"
