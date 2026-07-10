@@ -15,6 +15,14 @@ class BotMainTest(unittest.TestCase):
         self.assertTrue(bot.intents.members)
         self.assertTrue(bot.intents.message_content)
 
+    def test_create_bot_only_syncs_recording_gateway_commands(self) -> None:
+        bot = create_bot(Settings())
+
+        command_names = {command.name for command in bot.pending_application_commands}
+
+        self.assertEqual(command_names, {"join", "stop"})
+        self.assertEqual(set(bot.cogs), {"RecordingCog"})
+
 
 if __name__ == "__main__":
     unittest.main()
