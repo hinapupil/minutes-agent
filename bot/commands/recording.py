@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 import zipfile
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 from uuid import uuid4
@@ -22,6 +23,9 @@ from minutes_agent.models import (
 from minutes_agent.storage import GcsStorage
 from minutes_agent.tasks import CloudTasksPublisher
 
+PROMPT_COOLDOWN = timedelta(minutes=5)
+PROMPT_TIMEOUT_SECONDS = 600
+
 
 @dataclass(slots=True)
 class ActiveRecording:
@@ -34,11 +38,106 @@ class ActiveRecording:
     text_messages: list[TextMessage]
 
 
+@dataclass(slots=True)
+class RecordingPrompt:
+    guild_id: int
+    voice_channel_id: int
+    message: Any
+    view: RecordingPromptView
+    created_at: datetime
+
+
+class RecordingPromptView(discord.ui.View):
+    def __init__(
+        self,
+        cog: RecordingCog,
+        *,
+        guild_id: int,
+        voice_channel_id: int,
+        text_channel: discord.abc.Messageable,
+    ) -> None:
+        super().__init__(timeout=PROMPT_TIMEOUT_SECONDS)
+        self._cog = cog
+        self._guild_id = guild_id
+        self._voice_channel_id = voice_channel_id
+        self._text_channel = text_channel
+        self.message: Any | None = None
+
+    @discord.ui.button(label="録音する", style=discord.ButtonStyle.success)
+    async def start_recording(
+        self,
+        button: discord.ui.Button,
+        interaction: discord.Interaction,
+    ) -> None:
+        del button
+        guild = interaction.guild
+        member = interaction.user
+        voice_state = getattr(member, "voice", None)
+        if guild is None:
+            await interaction.response.send_message("ギルド内で実行してください", ephemeral=True)
+            return
+        if voice_state is None or voice_state.channel is None:
+            await interaction.response.send_message(
+                "voice channel に入ってから押してください",
+                ephemeral=True,
+            )
+            return
+        if guild.id in self._cog._active:
+            await interaction.response.send_message("すでに録音中です", ephemeral=True)
+            await self._cog._close_recording_prompt(
+                guild.id,
+                "録音開始確認は終了しました。すでに録音中です",
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True)
+        try:
+            content = await self._cog._start_recording(
+                guild,
+                text_channel=self._text_channel,
+                voice_channel=voice_state.channel,
+            )
+        except Exception as exc:
+            await interaction.followup.send(f"録音開始に失敗しました: {exc}", ephemeral=True)
+            return
+        await interaction.followup.send(content, ephemeral=True)
+        await self._cog._close_recording_prompt(guild.id, "録音を開始しました")
+
+    @discord.ui.button(label="今回はしない", style=discord.ButtonStyle.secondary)
+    async def decline_recording(
+        self,
+        button: discord.ui.Button,
+        interaction: discord.Interaction,
+    ) -> None:
+        del button
+        guild = interaction.guild
+        if guild is None:
+            await interaction.response.send_message("ギルド内で実行してください", ephemeral=True)
+            return
+        self._disable_items()
+        self.stop()
+        self._cog._prompts.pop(guild.id, None)
+        await interaction.response.edit_message(content="今回は録音しません", view=self)
+
+    async def on_timeout(self) -> None:
+        await self._cog._close_recording_prompt(
+            self._guild_id,
+            "録音開始確認は10分経過したため終了しました",
+        )
+
+    def _disable_items(self) -> None:
+        for child in self.children:
+            if hasattr(child, "disabled"):
+                child.disabled = True
+
+
 class RecordingCog(commands.Cog):
     def __init__(self, bot: discord.Bot, settings: Settings) -> None:
         self._bot = bot
         self._settings = settings
         self._active: dict[int, ActiveRecording] = {}
+        self._prompts: dict[int, RecordingPrompt] = {}
+        self._last_prompted_at: dict[int, datetime] = {}
 
     @discord.slash_command(name="join", description="Voice channel に参加して録音を開始します")
     async def join(self, ctx: discord.ApplicationContext) -> None:
@@ -54,32 +153,12 @@ class RecordingCog(commands.Cog):
             return
 
         await ctx.defer(ephemeral=True)
-        voice_client = ctx.guild.voice_client
-        if voice_client is None:
-            voice_client = await voice_state.channel.connect()
-        elif voice_client.channel.id != voice_state.channel.id:
-            await voice_client.move_to(voice_state.channel)
-
-        meeting_id = uuid4().hex
-        participants = _participants_from_channel(voice_state.channel)
-        recording = ActiveRecording(
-            meeting_id=meeting_id,
-            guild_id=str(ctx.guild.id),
-            channel_id=str(ctx.channel.id),
-            voice_channel_id=str(voice_state.channel.id),
+        content = await self._start_recording(
+            ctx.guild,
             text_channel=cast(discord.abc.Messageable, ctx.channel),
-            participants=participants,
-            text_messages=[],
+            voice_channel=voice_state.channel,
         )
-        sink = discord.sinks.WaveSink()
-
-        def finished_callback(*args: object) -> None:
-            error = next((arg for arg in args if isinstance(arg, Exception)), None)
-            self._bot.loop.create_task(self._on_recording_finished(recording, sink, error))
-
-        voice_client.start_recording(sink, finished_callback)
-        self._active[ctx.guild.id] = recording
-        await ctx.followup.send(f"録音を開始しました\nmeeting_id: `{meeting_id}`", ephemeral=True)
+        await ctx.followup.send(content, ephemeral=True)
 
     @discord.slash_command(name="stop", description="録音を停止して議事録生成を開始します")
     async def stop(self, ctx: discord.ApplicationContext) -> None:
@@ -163,19 +242,152 @@ class RecordingCog(commands.Cog):
         before: discord.VoiceState,
         after: discord.VoiceState,
     ) -> None:
-        if member.guild is None or member.guild.id not in self._active:
+        if member.guild is None:
+            return
+        await self._maybe_offer_recording(member, before, after)
+        await self._close_prompt_if_channel_empty(member, before, after)
+        await self._stop_if_recorded_channel_empty(member, before, after)
+
+    async def _maybe_offer_recording(
+        self,
+        member: discord.Member,
+        before: discord.VoiceState,
+        after: discord.VoiceState,
+    ) -> None:
+        now = datetime.now(UTC)
+        guild_id = member.guild.id
+        if not _should_offer_recording_prompt(
+            member,
+            before,
+            after,
+            is_active=guild_id in self._active,
+            last_prompted_at=self._last_prompted_at.get(guild_id),
+            now=now,
+        ):
+            return
+        text_channel = await self._get_prompt_text_channel()
+        if text_channel is None or after.channel is None:
+            return
+        if guild_id in self._prompts:
+            return
+
+        view = RecordingPromptView(
+            self,
+            guild_id=guild_id,
+            voice_channel_id=after.channel.id,
+            text_channel=text_channel,
+        )
+        message = await text_channel.send(
+            f"🎙️ {member.display_name} さんが {after.channel.name} に入りました。"
+            "録音を開始しますか？",
+            view=view,
+        )
+        view.message = message
+        self._prompts[guild_id] = RecordingPrompt(
+            guild_id=guild_id,
+            voice_channel_id=after.channel.id,
+            message=message,
+            view=view,
+            created_at=now,
+        )
+        self._last_prompted_at[guild_id] = now
+
+    async def _close_prompt_if_channel_empty(
+        self,
+        member: discord.Member,
+        before: discord.VoiceState,
+        after: discord.VoiceState,
+    ) -> None:
+        prompt = self._prompts.get(member.guild.id)
+        if prompt is None or before.channel is None:
+            return
+        if before.channel.id != prompt.voice_channel_id:
+            return
+        if after.channel is not None and after.channel.id == before.channel.id:
+            return
+        if _human_members(before.channel):
+            return
+        await self._close_recording_prompt(
+            member.guild.id,
+            "全員退出したため録音開始確認を終了しました",
+        )
+
+    async def _stop_if_recorded_channel_empty(
+        self,
+        member: discord.Member,
+        before: discord.VoiceState,
+        after: discord.VoiceState,
+    ) -> None:
+        if member.guild.id not in self._active:
             return
         recording = self._active[member.guild.id]
         if before.channel is None or str(before.channel.id) != recording.voice_channel_id:
             return
         if after.channel is not None and str(after.channel.id) == recording.voice_channel_id:
             return
-        humans = [voice_member for voice_member in before.channel.members if not voice_member.bot]
-        if humans:
+        if _human_members(before.channel):
             return
         voice_client = member.guild.voice_client
         if voice_client is not None:
             voice_client.stop_recording()
+
+    async def _start_recording(
+        self,
+        guild: discord.Guild,
+        *,
+        text_channel: discord.abc.Messageable,
+        voice_channel: discord.VoiceChannel,
+    ) -> str:
+        if guild.id in self._active:
+            raise RuntimeError("すでに録音中です")
+        voice_client = guild.voice_client
+        if voice_client is None:
+            voice_client = await voice_channel.connect()
+        elif voice_client.channel.id != voice_channel.id:
+            await voice_client.move_to(voice_channel)
+
+        meeting_id = uuid4().hex
+        participants = _participants_from_channel(voice_channel)
+        recording = ActiveRecording(
+            meeting_id=meeting_id,
+            guild_id=str(guild.id),
+            channel_id=str(cast(Any, text_channel).id),
+            voice_channel_id=str(voice_channel.id),
+            text_channel=text_channel,
+            participants=participants,
+            text_messages=[],
+        )
+        sink = discord.sinks.WaveSink()
+
+        def finished_callback(*args: object) -> None:
+            error = next((arg for arg in args if isinstance(arg, Exception)), None)
+            self._bot.loop.create_task(self._on_recording_finished(recording, sink, error))
+
+        voice_client.start_recording(sink, finished_callback)
+        self._active[guild.id] = recording
+        return f"録音を開始しました\nmeeting_id: `{meeting_id}`"
+
+    async def _get_prompt_text_channel(self) -> discord.abc.Messageable | None:
+        if not self._settings.discord_channel_id:
+            return None
+        try:
+            channel_id = int(self._settings.discord_channel_id)
+        except ValueError:
+            return None
+        channel = self._bot.get_channel(channel_id)
+        if channel is None:
+            channel = await self._bot.fetch_channel(channel_id)
+        if not hasattr(channel, "send"):
+            return None
+        return cast(discord.abc.Messageable, channel)
+
+    async def _close_recording_prompt(self, guild_id: int, content: str) -> None:
+        prompt = self._prompts.pop(guild_id, None)
+        if prompt is None:
+            return
+        prompt.view._disable_items()
+        prompt.view.stop()
+        await prompt.message.edit(content=content, view=prompt.view)
 
     async def _on_recording_finished(
         self,
@@ -257,9 +469,38 @@ class RecordingCog(commands.Cog):
 def _participants_from_channel(channel: discord.VoiceChannel) -> list[Participant]:
     return [
         Participant(user_id=str(member.id), display_name=member.display_name)
-        for member in channel.members
-        if not member.bot
+        for member in _human_members(channel)
     ]
+
+
+def _human_members(channel: Any) -> list[Any]:
+    return [
+        member
+        for member in getattr(channel, "members", [])
+        if not getattr(member, "bot", False)
+    ]
+
+
+def _should_offer_recording_prompt(
+    member: Any,
+    before: Any,
+    after: Any,
+    *,
+    is_active: bool,
+    last_prompted_at: datetime | None,
+    now: datetime,
+) -> bool:
+    if getattr(member, "bot", False) or is_active:
+        return False
+    before_channel = getattr(before, "channel", None)
+    after_channel = getattr(after, "channel", None)
+    if after_channel is None:
+        return False
+    if before_channel is not None and before_channel.id == after_channel.id:
+        return False
+    if len(_human_members(after_channel)) != 1:
+        return False
+    return last_prompted_at is None or now - last_prompted_at >= PROMPT_COOLDOWN
 
 
 def _expand_audio_files(path: Path, output_dir: Path) -> list[Path]:
