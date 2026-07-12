@@ -325,7 +325,8 @@ class RecordingCog(commands.Cog):
         voice_client = guild.voice_client
         if voice_client is None:
             voice_client = await voice_channel.connect()
-        elif voice_client.channel.id != voice_channel.id:
+        # py-cord 2.7 の型では channel が Connectable（id 属性なし）のため getattr で比較
+        elif getattr(voice_client.channel, "id", None) != voice_channel.id:
             await voice_client.move_to(voice_channel)
 
         meeting_id = uuid4().hex
