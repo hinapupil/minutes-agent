@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import io
 import shutil
 import warnings
@@ -435,10 +436,10 @@ class RecordingCog(commands.Cog):
     ) -> None:
         guild_id_int = int(recording.guild_id)
         self._active.pop(guild_id_int, None)
-        if error is not None:
-            await recording.text_channel.send(f"録音終了処理でエラーが発生しました: {error}")
-            return
         try:
+            if error is not None:
+                await recording.text_channel.send(f"録音終了処理でエラーが発生しました: {error}")
+                return
             if not getattr(sink, "finished", False):
                 sink.cleanup()  # 2.8 の reader は cleanup を呼ばない（wav ヘッダ付与に必須）
             local_paths = self._save_sink_audio(recording.meeting_id, sink)
@@ -470,6 +471,19 @@ class RecordingCog(commands.Cog):
             await recording.text_channel.send(
                 f"録音は終了しましたが、議事録生成ジョブ登録に失敗しました: {exc}"
             )
+        finally:
+            # 録音が終わったら（成功・失敗問わず）voice channel から退出する。
+            # これが無いと Bot が誰もいないチャンネルに残り続ける
+            await self._disconnect_voice(guild_id_int)
+
+    async def _disconnect_voice(self, guild_id: int) -> None:
+        guild = self._bot.get_guild(guild_id)
+        voice_client = guild.voice_client if guild else None
+        if voice_client is None:
+            return
+        # 退出失敗は致命的でない（次の join で move_to される）
+        with contextlib.suppress(Exception):
+            await voice_client.disconnect(force=True)
 
     def _save_sink_audio(self, meeting_id: str, sink: discord.sinks.WaveSink) -> list[Path]:
         output_dir = self._settings.local_recordings_dir / meeting_id
