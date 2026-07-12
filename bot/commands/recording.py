@@ -454,7 +454,9 @@ class RecordingCog(commands.Cog):
             if not getattr(sink, "finished", False):
                 sink.cleanup()  # 2.8 の reader は cleanup を呼ばない（wav ヘッダ付与に必須）
             local_paths = self._save_sink_audio(recording.meeting_id, sink)
-            audio_files = self._upload_paths(recording.meeting_id, local_paths)
+            audio_files = self._upload_paths(
+                recording.meeting_id, local_paths, recording.participants
+            )
             request = GenerateMinutesRequest(
                 meeting_id=recording.meeting_id,
                 guild_id=recording.guild_id,
@@ -514,8 +516,16 @@ class RecordingCog(commands.Cog):
             raise RuntimeError("recording sink did not contain audio")
         return paths
 
-    def _upload_paths(self, meeting_id: str, paths: list[Path]) -> list[AudioArtifact]:
+    def _upload_paths(
+        self,
+        meeting_id: str,
+        paths: list[Path],
+        participants: list[Participant] | None = None,
+    ) -> list[AudioArtifact]:
         storage = GcsStorage(self._settings)
+        # wav ファイル名は user_id なので、参加者リストから表示名を引く
+        # （これが無いと議事録に生のユーザーIDが出てしまう）
+        display_names = {p.user_id: p.display_name for p in participants or []}
         audio_files: list[AudioArtifact] = []
         for path in paths:
             speaker_id = path.stem
@@ -523,7 +533,7 @@ class RecordingCog(commands.Cog):
             audio_files.append(
                 AudioArtifact(
                     speaker_id=speaker_id,
-                    speaker_name=path.stem,
+                    speaker_name=display_names.get(speaker_id, path.stem),
                     local_path=str(path),
                     gcs_uri=gcs_uri,
                 )

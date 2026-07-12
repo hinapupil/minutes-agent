@@ -167,9 +167,15 @@ class MinutesWorkflow:
 
     def _build_context(self, meeting: MeetingRecord) -> str:
         recent = self._repository.list_recent_minutes(before=meeting.created_at, limit=5)
+        # 参加者の対応表を渡し、transcript 中に生のユーザーIDが混ざっても
+        # 議事録では表示名に解決できるようにする
+        roster = "\n".join(
+            f"- {p.user_id} = {p.display_name}" for p in meeting.participants
+        )
+        roster_block = f"## 参加者（ID = 表示名）\n{roster}\n\n" if roster else ""
         if not recent:
-            return ""
-        return "\n\n".join(
+            return roster_block
+        return roster_block + "\n\n".join(
             f"## {item.created_at.date().isoformat()} / {item.meeting_id}\n"
             f"{item.minutes_md or item.render_transcript()}"
             for item in recent
