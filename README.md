@@ -28,6 +28,7 @@ Discord Webhook                → 結果投稿
 | `/ask <question>` | 過去の議事録に関する質問 |
 | `/actions` | 未完了アクションアイテム一覧 |
 | `/action-done <id>` | アクションアイテムを完了 |
+| `/setup <owner/repo>` | GitHub リポジトリから用語集を学習（音声認識の固有名詞補正） |
 
 ## Tech Stack
 

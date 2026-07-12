@@ -52,6 +52,9 @@ LANDING_HTML = """<!DOCTYPE html>
       数分で <code>#議事録</code> チャンネルに議事録とアクションアイテムが投稿されます</li>
   <li><code>/actions</code> で抽出済みアクションアイテムの一覧、
       <code>/action-done &lt;id&gt;</code> で完了化を確認できます</li>
+  <li><code>/setup repo:&lt;owner/repo&gt;</code> — お好きな public リポジトリを指定すると、
+      エージェントが README・docs・コントリビューターを読んで議事録用の用語集を学習します
+      （音声認識の固有名詞補正に使われます）</li>
 </ol>
 <p>毎日 10:00 (JST) には Cloud Scheduler 起点でエージェントが未完了アクションを
 自律判定し、期限切れ・期限間近のものをリマインド投稿します（between-meetings の自律動作）。</p>

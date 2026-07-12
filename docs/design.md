@@ -413,6 +413,7 @@ sequenceDiagram
 | `/ask` | `question: string` | Cloud Run | 過去の議事録に関する質問 |
 | `/actions` | `status?: string` | Cloud Run | アクションアイテム一覧 |
 | `/action-done` | `id: string` | Cloud Run | アクションアイテムを完了にする |
+| `/setup` | `repo: string` | Cloud Run | GitHub リポジトリ（owner/repo）から用語集を蒸留して学習。議事録生成時の固有名詞補正に使う（ADR-0003） |
 
 ## 8. Tech Stack
 
