@@ -25,6 +25,12 @@ resource "google_cloud_run_v2_service" "agent" {
         name  = "GOOGLE_CLOUD_LOCATION"
         value = var.region
       }
+      # ADK 内部の google-genai を Vertex AI モードで動かす（無いと API キーを
+      # 要求して /ask の Agent 実行が ValueError: No API key で落ちる。E2E実測）
+      env {
+        name  = "GOOGLE_GENAI_USE_VERTEXAI"
+        value = "true"
+      }
       env {
         name  = "GCS_BUCKET_NAME"
         value = google_storage_bucket.audio.name
@@ -132,6 +138,12 @@ resource "google_cloud_run_v2_service" "interactions" {
       env {
         name  = "GOOGLE_CLOUD_LOCATION"
         value = var.region
+      }
+      # ADK 内部の google-genai を Vertex AI モードで動かす（無いと API キーを
+      # 要求して /ask の Agent 実行が ValueError: No API key で落ちる。E2E実測）
+      env {
+        name  = "GOOGLE_GENAI_USE_VERTEXAI"
+        value = "true"
       }
       env {
         name  = "GCS_BUCKET_NAME"
