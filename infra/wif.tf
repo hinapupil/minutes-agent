@@ -22,8 +22,9 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "attribute.repository" = "assertion.repository"
   }
 
-  # このリポジトリの workflow 以外からのトークンを拒否する
-  attribute_condition = "attribute.repository == \"${var.github_repository}\""
+  # このリポジトリの main ブランチの workflow 以外からのトークンを拒否する (CKV_GCP_125)。
+  # deploy.yml は push:main と workflow_dispatch（main 上で実行）のみなので sub をブランチまで固定できる
+  attribute_condition = "assertion.sub == \"repo:${var.github_repository}:ref:refs/heads/main\""
 }
 
 resource "google_service_account" "deploy" {
