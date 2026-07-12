@@ -67,6 +67,18 @@ def interaction_command_payloads() -> list[dict[str, Any]]:
                 }
             ],
         },
+        {
+            "name": "setup",
+            "description": "GitHub リポジトリを指定してプロジェクト用語集を学習します",
+            "options": [
+                {
+                    "name": "repo",
+                    "description": "owner/repo 形式（public リポジトリ）",
+                    "type": OPTION_STRING,
+                    "required": True,
+                }
+            ],
+        },
     ]
 
 

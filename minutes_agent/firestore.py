@@ -102,6 +102,16 @@ class FirestoreRepository:
                 break
         return matches
 
+    def save_guild_settings(self, guild_id: str, data: dict[str, Any]) -> None:
+        self._client.collection("guild_settings").document(guild_id).set(data, merge=True)
+
+    def get_guild_settings(self, guild_id: str) -> dict[str, Any] | None:
+        snapshot = self._client.collection("guild_settings").document(guild_id).get()
+        if not snapshot.exists:
+            return None
+        data = snapshot.to_dict()
+        return data if isinstance(data, dict) else None
+
     def list_recent_minutes(
         self,
         before: datetime | None = None,

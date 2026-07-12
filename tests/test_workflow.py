@@ -31,7 +31,54 @@ class FakeQuestionAnswerer:
         return "Runner 経由の回答"
 
 
+class FakeGuildSettingsRepository:
+    def __init__(self, guild_settings: dict[str, Any] | None) -> None:
+        self._guild_settings = guild_settings
+
+    def list_recent_minutes(self, before: datetime, limit: int = 5) -> list[Any]:
+        return []
+
+    def get_guild_settings(self, guild_id: str) -> dict[str, Any] | None:
+        return self._guild_settings
+
+
 class WorkflowTest(unittest.TestCase):
+    def test_build_context_injects_glossary_when_configured(self) -> None:
+        workflow = MinutesWorkflow.__new__(MinutesWorkflow)
+        workflow._repository = FakeGuildSettingsRepository(
+            {"repo": "hinapupil/minutes-agent", "glossary": ["MiyaIF", "Proto Pedia"]}
+        )
+        meeting = MeetingRecord(meeting_id="m1", guild_id="g1", channel_id="c1")
+
+        context = workflow._build_context(meeting)
+
+        self.assertIn("## プロジェクト用語集", context)
+        self.assertIn("MiyaIF", context)
+        self.assertIn("Proto Pedia", context)
+
+    def test_build_context_omits_glossary_block_when_not_configured(self) -> None:
+        workflow = MinutesWorkflow.__new__(MinutesWorkflow)
+        workflow._repository = FakeGuildSettingsRepository(None)
+        meeting = MeetingRecord(meeting_id="m1", guild_id="g1", channel_id="c1")
+
+        context = workflow._build_context(meeting)
+
+        self.assertEqual(context, "")
+
+    def test_build_context_falls_back_when_guild_settings_read_fails(self) -> None:
+        class BrokenRepository(FakeGuildSettingsRepository):
+            def get_guild_settings(self, guild_id: str) -> dict[str, Any] | None:
+                raise RuntimeError("firestore unavailable")
+
+        workflow = MinutesWorkflow.__new__(MinutesWorkflow)
+        workflow._repository = BrokenRepository(None)
+        meeting = MeetingRecord(meeting_id="m1", guild_id="g1", channel_id="c1")
+
+        context = workflow._build_context(meeting)
+
+        self.assertEqual(context, "")
+
+
     def test_full_transcript_includes_text_channel_messages(self) -> None:
         workflow = MinutesWorkflow.__new__(MinutesWorkflow)
         meeting = MeetingRecord(
