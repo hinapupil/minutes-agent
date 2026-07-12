@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import asyncio
+import io
 import shutil
+import warnings
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -24,6 +28,38 @@ from minutes_agent.tasks import CloudTasksPublisher
 
 PROMPT_COOLDOWN = timedelta(minutes=5)
 PROMPT_TIMEOUT_SECONDS = 600
+
+
+class CompatWaveSink(discord.sinks.WaveSink):
+    """py-cord 2.8 の新 voice 受信パイプラインでレガシー WaveSink を動かす互換層。
+
+    2.8.0 は受信系を刷新したが同梱 sinks が未追随（upstream #3139）:
+    - router が要求する __sink_listeners__ / walk_children() が未定義
+    - write() へ bytes ではなく VoiceData(source, pcm) が渡る
+    - 停止時に cleanup() が呼ばれない（呼び出し側で明示する）
+    本クラスは 2.8.0 の内部実装に依存するため、バージョン更新時は要再検証。
+    """
+
+    # 補助イベント（speaking start/stop 等）は購読しない
+    __sink_listeners__: list[tuple[str, str]] = []
+
+    def walk_children(self, *, with_self: bool = False) -> Iterator[CompatWaveSink]:
+        if with_self:
+            yield self
+
+    def write(self, data: Any, user: Any = None) -> None:
+        pcm = getattr(data, "pcm", None)
+        if pcm is None:
+            pcm = data if isinstance(data, (bytes, bytearray)) else b""
+        if not pcm:
+            return
+        user_id = getattr(user, "id", None)
+        if user_id is None:
+            packet = getattr(data, "packet", None)
+            user_id = getattr(packet, "ssrc", 0)
+        if user_id not in self.audio_data:
+            self.audio_data[user_id] = discord.sinks.core.AudioData(io.BytesIO())
+        self.audio_data[user_id].write(pcm)
 
 
 @dataclass(slots=True)
@@ -194,7 +230,9 @@ class RecordingCog(commands.Cog):
         if voice_client is None or ctx.guild.id not in self._active:
             await ctx.respond("録音中の会議はありません", ephemeral=True)
             return
-        voice_client.stop_recording()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            voice_client.stop_recording()
         await ctx.respond("録音を停止しました。議事録生成ジョブを登録します", ephemeral=True)
 
     @commands.Cog.listener()
@@ -310,7 +348,9 @@ class RecordingCog(commands.Cog):
             return
         voice_client = member.guild.voice_client
         if voice_client is not None:
-            voice_client.stop_recording()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                voice_client.stop_recording()
 
     async def _start_recording(
         self,
@@ -339,13 +379,20 @@ class RecordingCog(commands.Cog):
             participants=participants,
             text_messages=[],
         )
-        sink = discord.sinks.WaveSink()
+        sink = CompatWaveSink()
 
         def finished_callback(*args: object) -> None:
             error = next((arg for arg in args if isinstance(arg, Exception)), None)
-            self._bot.loop.create_task(self._on_recording_finished(recording, sink, error))
+            # 2.8 の after コールバックは reader スレッドから同期で呼ばれるため
+            # loop.create_task ではなく thread-safe な投入を使う
+            asyncio.run_coroutine_threadsafe(
+                self._on_recording_finished(recording, sink, error), self._bot.loop
+            )
 
-        voice_client.start_recording(sink, finished_callback)
+        with warnings.catch_warnings():
+            # upstream の「受信は壊れている」告知 (RuntimeWarning)。本シムで対応済みのため抑制
+            warnings.simplefilter("ignore", RuntimeWarning)
+            voice_client.start_recording(sink, finished_callback)
         self._active[guild.id] = recording
         return f"録音を開始しました\nmeeting_id: `{meeting_id}`"
 
@@ -385,6 +432,8 @@ class RecordingCog(commands.Cog):
             await recording.text_channel.send(f"録音終了処理でエラーが発生しました: {error}")
             return
         try:
+            if not getattr(sink, "finished", False):
+                sink.cleanup()  # 2.8 の reader は cleanup を呼ばない（wav ヘッダ付与に必須）
             local_paths = self._save_sink_audio(recording.meeting_id, sink)
             audio_files = self._upload_paths(recording.meeting_id, local_paths)
             request = GenerateMinutesRequest(
