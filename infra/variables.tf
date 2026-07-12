@@ -127,3 +127,9 @@ variable "speech_model" {
   description = "Speech-to-Text V2 model"
   default     = "chirp_2"
 }
+
+variable "github_repository" {
+  type        = string
+  description = "WIF の attribute_condition で許可する GitHub リポジトリ (owner/name)"
+  default     = "hinapupil/minutes-agent"
+}
