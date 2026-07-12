@@ -12,5 +12,7 @@ COPY agent ./agent
 COPY api ./api
 COPY minutes_agent ./minutes_agent
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Cloud Run のプロキシ配下で X-Forwarded-Proto を信頼させる（OIDC audience の
+# https スキーム解決に必要。無いと /tasks/check-actions の署名検証が 401 になる）
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers", "--forwarded-allow-ips", "*"]
 
