@@ -18,3 +18,16 @@ resource "google_storage_bucket" "audio" {
     }
   }
 }
+
+# Speech-to-Text V2 の batch_recognize は Google 管理の Speech サービスエージェントが
+# GCS の音声を直接読む。この権限が無いと文字起こしが
+# "storage.objects.get denied" で失敗する（E2E 実測）
+resource "google_storage_bucket_iam_member" "speech_service_agent_reader" {
+  bucket = google_storage_bucket.audio.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-speech.iam.gserviceaccount.com"
+}
+
+data "google_project" "current" {
+  project_id = var.project_id
+}
