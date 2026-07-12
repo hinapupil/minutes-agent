@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 import tempfile
 import urllib.error
@@ -15,10 +16,19 @@ from fastapi import BackgroundTasks, HTTPException, Request
 from minutes_agent.config import Settings
 from minutes_agent.discord import DiscordNotifier, verify_discord_signature
 from minutes_agent.firestore import FirestoreRepository
-from minutes_agent.models import AudioArtifact, GenerateMinutesRequest, MeetingRecord, Participant
+from minutes_agent.github_glossary import REPO_SLUG_PATTERN, fetch_repo_glossary
+from minutes_agent.models import (
+    AudioArtifact,
+    GenerateMinutesRequest,
+    MeetingRecord,
+    Participant,
+    utc_now,
+)
 from minutes_agent.storage import GcsStorage
 from minutes_agent.tasks import CloudTasksPublisher
 from minutes_agent.workflow import MinutesWorkflow
+
+logger = logging.getLogger(__name__)
 
 INTERACTION_PING = 1
 INTERACTION_APPLICATION_COMMAND = 2
@@ -89,6 +99,23 @@ async def handle_interaction(
             return _message(f"`{action_id}` は見つかりませんでした", ephemeral=True)
         return _message(f"`{action_id}` を完了にしました", ephemeral=True)
 
+    if command_name == "setup":
+        repo = str(_option_value(payload, "repo") or "").strip()
+        if not REPO_SLUG_PATTERN.match(repo):
+            return _message(
+                "repo は owner/repo 形式で指定してください（例: octocat/Hello-World）",
+                ephemeral=True,
+            )
+        background_tasks.add_task(
+            _run_setup_followup,
+            settings,
+            application_id,
+            token,
+            guild_id,
+            repo,
+        )
+        return {"type": RESPONSE_DEFERRED_CHANNEL_MESSAGE}
+
     if command_name == "minutes":
         attachment = _attachment_option(payload, "file")
         if attachment is None:
@@ -125,6 +152,39 @@ def _answer_question_followup(
     except Exception as exc:
         answer = f"質問処理に失敗しました: {exc}"
     notifier.send_interaction_followup(application_id, token, answer)
+
+
+def _run_setup_followup(
+    settings: Settings,
+    application_id: str,
+    token: str,
+    guild_id: str,
+    repo: str,
+) -> None:
+    notifier = DiscordNotifier(settings)
+    try:
+        glossary = fetch_repo_glossary(settings, repo)
+        FirestoreRepository(settings).save_guild_settings(
+            guild_id or "unknown",
+            {
+                "repo": repo,
+                "glossary": glossary,
+                "glossary_updated_at": utc_now().isoformat(),
+            },
+        )
+        preview = "\n".join(f"- {term}" for term in glossary[:10])
+        content = f"✅ 用語集を学習しました（{len(glossary)}語 / {repo}）"
+        if preview:
+            content = f"{content}\n{preview}"
+        notifier.send_interaction_followup(application_id, token, content)
+    except Exception as exc:
+        logger.exception("failed to run /setup for guild=%s repo=%s", guild_id, repo)
+        notifier.send_interaction_followup(
+            application_id,
+            token,
+            f"用語集の学習に失敗しました: {exc}",
+            ephemeral=True,
+        )
 
 
 def _enqueue_attachment_minutes(

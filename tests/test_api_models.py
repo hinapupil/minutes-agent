@@ -20,7 +20,18 @@ class ApiModelsTest(unittest.TestCase):
     def test_interaction_command_payloads_do_not_include_gateway_commands(self) -> None:
         names = {command["name"] for command in interaction_command_payloads()}
 
-        self.assertEqual(names, {"minutes", "ask", "actions", "action-done"})
+        self.assertEqual(names, {"minutes", "ask", "actions", "action-done", "setup"})
+
+    def test_setup_command_requires_repo_option(self) -> None:
+        setup_command = next(
+            command
+            for command in interaction_command_payloads()
+            if command["name"] == "setup"
+        )
+
+        options = {option["name"]: option for option in setup_command["options"]}
+        self.assertIn("repo", options)
+        self.assertTrue(options["repo"]["required"])
 
 
 if __name__ == "__main__":

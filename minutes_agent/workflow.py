@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
@@ -19,6 +20,8 @@ from minutes_agent.models import (
     TranscriptSegment,
     utc_now,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class QuestionAnswerer(Protocol):
@@ -173,13 +176,29 @@ class MinutesWorkflow:
             f"- {p.user_id} = {p.display_name}" for p in meeting.participants
         )
         roster_block = f"## 参加者（ID = 表示名）\n{roster}\n\n" if roster else ""
+        glossary_block = self._build_glossary_block(meeting.guild_id)
+        prefix = roster_block + glossary_block
         if not recent:
-            return roster_block
-        return roster_block + "\n\n".join(
+            return prefix
+        return prefix + "\n\n".join(
             f"## {item.created_at.date().isoformat()} / {item.meeting_id}\n"
             f"{item.minutes_md or item.render_transcript()}"
             for item in recent
         )
+
+    def _build_glossary_block(self, guild_id: str) -> str:
+        try:
+            settings = self._repository.get_guild_settings(guild_id)
+        except Exception:
+            logger.warning("failed to load guild_settings for guild %s", guild_id, exc_info=True)
+            return ""
+        if not settings:
+            return ""
+        glossary = settings.get("glossary")
+        if not isinstance(glossary, list) or not glossary:
+            return ""
+        terms = "\n".join(f"- {term}" for term in glossary)
+        return f"## プロジェクト用語集（音声認識の誤りはこの用語に補正すること）\n{terms}\n\n"
 
     def _render_full_transcript(
         self,

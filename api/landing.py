@@ -35,7 +35,7 @@ LANDING_HTML = """<!DOCTYPE html>
 
 <p>Discord の定例ミーティングを自動録音し、<strong>議事録生成・アクションアイテム抽出・
 進捗リマインド</strong>までを自律実行する AI エージェントです。
-「決めたことが実行されない」という会議の本質課題を、エージェントの自律的な追跡で解決します。</p>
+「決めたことが実行されない」という会議の課題を、エージェントの自律的な追跡で解決します。</p>
 
 <p>DevOps × AI Agent Hackathon (Findy × Google Cloud) 提出作品。</p>
 
@@ -52,9 +52,22 @@ LANDING_HTML = """<!DOCTYPE html>
       数分で <code>#議事録</code> チャンネルに議事録とアクションアイテムが投稿されます</li>
   <li><code>/actions</code> で抽出済みアクションアイテムの一覧、
       <code>/action-done &lt;id&gt;</code> で完了化を確認できます</li>
+  <li><code>/setup repo:&lt;owner/repo&gt;</code> — お好きな public リポジトリを指定すると、
+      エージェントが README・docs・コントリビューターを読んで議事録用の用語集を学習します
+      （音声認識の固有名詞補正に使われます）</li>
 </ol>
 <p>毎日 10:00 (JST) には Cloud Scheduler 起点でエージェントが未完了アクションを
 自律判定し、期限切れ・期限間近のものをリマインド投稿します（between-meetings の自律動作）。</p>
+
+<h2>🧭 なぜ「デモサーバー招待」方式か</h2>
+<p>本プロダクトの価値は「<strong>複数話者の実会議 → AI 議事録</strong>」です。
+お一人で bot をインストールしても、会議そのものが再現できません。
+そこで、実会議データと過去の議事録を仕込んだデモサーバーへの招待を選びました。
+<strong>着席後3分で全機能を試せます</strong>
+（<a href="https://github.com/hinapupil/minutes-agent/blob/main/docs/adr/0004-demo-server-as-judge-verification-path.md">ADR-0004</a>）。
+設計はギルド単位（Firestore <code>guild_settings</code>）で実装済みのため、
+インストール型への移行は投稿経路の切り替えだけです
+（ロードマップ: <a href="https://github.com/hinapupil/minutes-agent/issues/57">#57</a>）。</p>
 
 <h2>🏗️ 構成（すべて Google Cloud）</h2>
 <p>GCE (Pycord Bot / voice録音) → Cloud Storage → Cloud Tasks →
