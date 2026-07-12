@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 800" font-family="'Hiragino Sans','Noto Sans JP',sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#80868b"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect width="1480" height="800" fill="white"/>
+  <text x="740" y="36" text-anchor="middle" font-size="21" font-weight="bold" fill="#202124">Minutes Agent — システム構成</text>
+
+  <!-- Discord -->
+  <rect x="30" y="70" width="310" height="690" rx="16" fill="#f5f6ff" stroke="#5865F2" stroke-width="2"/>
+  <svg x="110" y="90" width="30" height="30" viewBox="0 0 256 199"><path fill="#5865f2" d="M216.856 16.597A208.5 208.5 0 0 0 164.042 0c-2.275 4.113-4.933 9.645-6.766 14.046q-29.538-4.442-58.533 0c-1.832-4.4-4.55-9.933-6.846-14.046a207.8 207.8 0 0 0-52.855 16.638C5.618 67.147-3.443 116.4 1.087 164.956c22.169 16.555 43.653 26.612 64.775 33.193A161 161 0 0 0 79.735 175.3a136.4 136.4 0 0 1-21.846-10.632a109 109 0 0 0 5.356-4.237c42.122 19.702 87.89 19.702 129.51 0a132 132 0 0 0 5.355 4.237a136 136 0 0 1-21.886 10.653c4.006 8.02 8.638 15.67 13.873 22.848c21.142-6.58 42.646-16.637 64.815-33.213c5.316-56.288-9.08-105.09-38.056-148.36M85.474 135.095c-12.645 0-23.015-11.805-23.015-26.18s10.149-26.2 23.015-26.2s23.236 11.804 23.015 26.2c.02 14.375-10.148 26.18-23.015 26.18m85.051 0c-12.645 0-23.014-11.805-23.014-26.18s10.148-26.2 23.014-26.2c12.867 0 23.236 11.804 23.015 26.2c0 14.375-10.148 26.18-23.015 26.18"/></svg>
+  <text x="200" y="112" text-anchor="middle" font-size="18" font-weight="bold" fill="#5865F2">Discord</text>
+  
+  <g filter="url(#shadow)">
+    <rect x="60" y="150" width="250" height="76" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="76" y="168.0" width="40" height="40" viewBox="0 0 256 199"><path fill="#5865f2" d="M216.856 16.597A208.5 208.5 0 0 0 164.042 0c-2.275 4.113-4.933 9.645-6.766 14.046q-29.538-4.442-58.533 0c-1.832-4.4-4.55-9.933-6.846-14.046a207.8 207.8 0 0 0-52.855 16.638C5.618 67.147-3.443 116.4 1.087 164.956c22.169 16.555 43.653 26.612 64.775 33.193A161 161 0 0 0 79.735 175.3a136.4 136.4 0 0 1-21.846-10.632a109 109 0 0 0 5.356-4.237c42.122 19.702 87.89 19.702 129.51 0a132 132 0 0 0 5.355 4.237a136 136 0 0 1-21.886 10.653c4.006 8.02 8.638 15.67 13.873 22.848c21.142-6.58 42.646-16.637 64.815-33.213c5.316-56.288-9.08-105.09-38.056-148.36M85.474 135.095c-12.645 0-23.015-11.805-23.015-26.18s10.149-26.2 23.015-26.2s23.236 11.804 23.015 26.2c.02 14.375-10.148 26.18-23.015 26.18m85.051 0c-12.645 0-23.014-11.805-23.014-26.18s10.148-26.2 23.014-26.2c12.867 0 23.236 11.804 23.015 26.2c0 14.375-10.148 26.18-23.015 26.18"/></svg>
+    <text x="130" y="184.0" font-size="16" font-weight="bold" fill="#202124">ユーザー</text>
+    <text x="130" y="206.0" font-size="12" fill="#5f6368">会議の参加者たち</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="60" y="340" width="250" height="76" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="76" y="358.0" width="40" height="40" viewBox="0 0 256 199"><path fill="#5865f2" d="M216.856 16.597A208.5 208.5 0 0 0 164.042 0c-2.275 4.113-4.933 9.645-6.766 14.046q-29.538-4.442-58.533 0c-1.832-4.4-4.55-9.933-6.846-14.046a207.8 207.8 0 0 0-52.855 16.638C5.618 67.147-3.443 116.4 1.087 164.956c22.169 16.555 43.653 26.612 64.775 33.193A161 161 0 0 0 79.735 175.3a136.4 136.4 0 0 1-21.846-10.632a109 109 0 0 0 5.356-4.237c42.122 19.702 87.89 19.702 129.51 0a132 132 0 0 0 5.355 4.237a136 136 0 0 1-21.886 10.653c4.006 8.02 8.638 15.67 13.873 22.848c21.142-6.58 42.646-16.637 64.815-33.213c5.316-56.288-9.08-105.09-38.056-148.36M85.474 135.095c-12.645 0-23.015-11.805-23.015-26.18s10.149-26.2 23.015-26.2s23.236 11.804 23.015 26.2c.02 14.375-10.148 26.18-23.015 26.18m85.051 0c-12.645 0-23.014-11.805-23.014-26.18s10.148-26.2 23.014-26.2c12.867 0 23.236 11.804 23.015 26.2c0 14.375-10.148 26.18-23.015 26.18"/></svg>
+    <text x="130" y="374.0" font-size="16" font-weight="bold" fill="#202124">ボイスチャンネル</text>
+    <text x="130" y="396.0" font-size="12" fill="#5f6368">会議の場（E2EE/DAVE 対応）</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="60" y="600" width="250" height="76" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="76" y="618.0" width="40" height="40" viewBox="0 0 256 199"><path fill="#5865f2" d="M216.856 16.597A208.5 208.5 0 0 0 164.042 0c-2.275 4.113-4.933 9.645-6.766 14.046q-29.538-4.442-58.533 0c-1.832-4.4-4.55-9.933-6.846-14.046a207.8 207.8 0 0 0-52.855 16.638C5.618 67.147-3.443 116.4 1.087 164.956c22.169 16.555 43.653 26.612 64.775 33.193A161 161 0 0 0 79.735 175.3a136.4 136.4 0 0 1-21.846-10.632a109 109 0 0 0 5.356-4.237c42.122 19.702 87.89 19.702 129.51 0a132 132 0 0 0 5.355 4.237a136 136 0 0 1-21.886 10.653c4.006 8.02 8.638 15.67 13.873 22.848c21.142-6.58 42.646-16.637 64.815-33.213c5.316-56.288-9.08-105.09-38.056-148.36M85.474 135.095c-12.645 0-23.015-11.805-23.015-26.18s10.149-26.2 23.015-26.2s23.236 11.804 23.015 26.2c.02 14.375-10.148 26.18-23.015 26.18m85.051 0c-12.645 0-23.014-11.805-23.014-26.18s10.148-26.2 23.014-26.2c12.867 0 23.236 11.804 23.015 26.2c0 14.375-10.148 26.18-23.015 26.18"/></svg>
+    <text x="130" y="634.0" font-size="16" font-weight="bold" fill="#202124">#議事録 チャンネル</text>
+    <text x="130" y="656.0" font-size="12" fill="#5f6368">議事録・リマインドが届く</text>
+  </g>
+
+  <!-- Google Cloud -->
+  <rect x="390" y="70" width="1060" height="690" rx="16" fill="#f8f9fa" stroke="#4285F4" stroke-width="2"/>
+  <text x="920" y="106" text-anchor="middle" font-size="18" font-weight="bold" fill="#4285F4">Google Cloud</text>
+
+  
+  <g filter="url(#shadow)">
+    <rect x="430" y="150" width="280" height="76" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="446" y="168.0" width="40" height="40" viewBox="0 0 24 24"><path fill="#aecbfa" d="M9 9h6v6H9z"/><path fill="#669df6" d="M11 2h2v4h-2zM7 2h2v4H7zm8 0h2v4h-2z"/><path fill="#4285f4" d="M11 18h2v4h-2zm-4 0h2v4H7zm8 0h2v4h-2zm3-5v-2h4v2zm0 4v-2h4v2zm0-8V7h4v2z"/><path fill="#669df6" d="M2 13v-2h4v2zm0 4v-2h4v2zm0-8V7h4v2z"/><path fill="#aecbfa" d="M5 5v14h14V5Zm12 12H7V7h10Z"/><path fill="#669df6" d="M9 15h6l-3-3z"/><path fill="#4285f4" d="m12 12l3 3V9z"/></svg>
+    <text x="500" y="184.0" font-size="16" font-weight="bold" fill="#202124">Compute Engine</text>
+    <text x="500" y="206.0" font-size="12" fill="#5f6368">Pycord Bot（Gateway / 録音）</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="430" y="340" width="280" height="76" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="446" y="358.0" width="40" height="40" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path fill="#669df6" d="M11 5h2v7h-2z"/><path fill="#4285f4" d="M11 12h2v7h-2z"/><path fill="#669df6" d="M15 5h2v7h-2z"/><path fill="#4285f4" d="M15 12h2v7h-2z"/><path fill="#669df6" d="M19 5h2v7h-2z"/><path fill="#4285f4" d="M19 12h2v7h-2z"/><path fill="#669df6" d="M7 5h2v7H7z"/><path fill="#4285f4" d="M7 12h2v7H7z"/><path fill="#669df6" d="M3 5h2v7H3z"/><path fill="#4285f4" d="M3 12h2v7H3z"/></svg>
+    <text x="500" y="374.0" font-size="16" font-weight="bold" fill="#202124">Cloud Tasks</text>
+    <text x="500" y="396.0" font-size="12" fill="#5f6368">非同期ジョブキュー</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="430" y="450" width="280" height="76" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="446" y="468.0" width="40" height="40" viewBox="0 0 24 24"><path fill="#669df6" d="M20 21a1 1 0 0 1-.7-.29l-2-2a1 1 0 0 1 1.41-1.41l2 2a1 1 0 0 1 0 1.41A1 1 0 0 1 20 21M4 21a1 1 0 0 1-.7-1.71l2-2a1 1 0 0 1 1.42 0a1 1 0 0 1 0 1.41l-2 2A1 1 0 0 1 4 21"/><path fill="#4285f4" d="m5.47 17.13l-1.22 1.22a11 11 0 0 0 1.42 1.41l1.22-1.22Zm14.26 1.18l-1-1a1.2 1.2 0 0 0-.23-.16l-1.34 1.34a1.2 1.2 0 0 0 .16.23l1 1a11 11 0 0 0 1.41-1.41"/><path fill="none" d="M0 0h24v24H0z"/><path fill="#669df6" d="M12 21a9 9 0 1 1 9-9a9 9 0 0 1-9 9m0-2a7 7 0 1 0-7-7a7 7 0 0 0 7 7"/><path fill="#4285f4" d="M12 17a5 5 0 0 0 5-5a5 5 0 0 0-5-5v5l-4.08 2.91A5 5 0 0 0 12 17"/><path fill="#aecbfa" d="M4 6.07a1 1 0 0 1-.71-1.71l2-2a1 1 0 0 1 1.42 0a1 1 0 0 1 0 1.41l-2 2a1 1 0 0 1-.71.3m16 0a1 1 0 0 1-.71-.3l-2-2a1 1 0 0 1 0-1.41a1 1 0 0 1 1.42 0l2 2A1 1 0 0 1 20 6.07"/></svg>
+    <text x="500" y="484.0" font-size="16" font-weight="bold" fill="#202124">Cloud Scheduler</text>
+    <text x="500" y="506.0" font-size="12" fill="#5f6368">毎朝の自律リマインド起点</text>
+  </g>
+
+  <rect x="760" y="150" width="340" height="430" rx="14" fill="white" stroke="#dadce0" stroke-width="2"/>
+  <svg x="850" y="168" width="26" height="26" viewBox="0 0 24 24"><g fill-rule="evenodd"><path fill="#aecbfa" d="M8.9 2.63L12.02 12h9.36z"/><path fill="#4285f4" d="M21.38 12h-9.36L8.9 21.38zM3.44 21.38l3.13-1.57L8.9 12H5.78z"/><path fill="#aecbfa" d="M3.44 2.63L5.78 12H8.9L6.57 4.19z"/></g></svg>
+  <text x="950" y="187" text-anchor="middle" font-size="15" font-weight="bold" fill="#5f6368">Cloud Run</text>
+  
+  <g filter="url(#shadow)">
+    <rect x="790" y="210" width="280" height="70" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="806" y="225.0" width="40" height="40" viewBox="0 0 24 24"><g fill-rule="evenodd"><path fill="#aecbfa" d="M8.9 2.63L12.02 12h9.36z"/><path fill="#4285f4" d="M21.38 12h-9.36L8.9 21.38zM3.44 21.38l3.13-1.57L8.9 12H5.78z"/><path fill="#aecbfa" d="M3.44 2.63L5.78 12H8.9L6.57 4.19z"/></g></svg>
+    <text x="860" y="241.0" font-size="16" font-weight="bold" fill="#202124">Interactions API</text>
+    <text x="860" y="263.0" font-size="12" fill="#5f6368">スラッシュコマンド応答（公開）</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="790" y="320" width="280" height="70" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="806" y="335.0" width="40" height="40" viewBox="0 0 24 24"><g fill-rule="evenodd"><path fill="#aecbfa" d="M8.9 2.63L12.02 12h9.36z"/><path fill="#4285f4" d="M21.38 12h-9.36L8.9 21.38zM3.44 21.38l3.13-1.57L8.9 12H5.78z"/><path fill="#aecbfa" d="M3.44 2.63L5.78 12H8.9L6.57 4.19z"/></g></svg>
+    <text x="860" y="351.0" font-size="16" font-weight="bold" fill="#202124">Agent API</text>
+    <text x="860" y="373.0" font-size="12" fill="#5f6368">議事録パイプライン（内部）</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="790" y="470" width="280" height="84" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="806" y="492.0" width="40" height="40" viewBox="0 0 24 24"><path fill="#669df6" d="M20 13.89a.77.77 0 0 0-1-.16l-7 5.14v.22a.72.72 0 1 1 0 1.43a.74.74 0 0 0 .45-.15l7.41-5.47a.76.76 0 0 0 .14-1.01"/><path fill="#aecbfa" d="M12 20.52a.72.72 0 0 1 0-1.43v-.22l-7-5.14a.76.76 0 0 0-1 .16a.74.74 0 0 0 .16 1l7.41 5.47a.73.73 0 0 0 .44.15Z"/><path fill="#4285f4" d="M12 18.34a1.47 1.47 0 1 0 1.47 1.47A1.47 1.47 0 0 0 12 18.34m0 2.18a.72.72 0 1 1 .72-.71a.71.71 0 0 1-.72.71"/><path fill="#aecbfa" d="M6 6.11a.76.76 0 0 1-.75-.75V3.48a.76.76 0 1 1 1.51 0v1.88a.76.76 0 0 1-.76.75"/><circle cx="5.98" cy="12" r=".76" fill="#aecbfa"/><circle cx="5.98" cy="9.79" r=".76" fill="#aecbfa"/><circle cx="5.98" cy="7.57" r=".76" fill="#aecbfa"/><path fill="#4285f4" d="M18 8.31a.76.76 0 0 1-.75-.76V5.67a.75.75 0 1 1 1.5 0v1.88a.75.75 0 0 1-.75.76"/><circle cx="18.02" cy="12.01" r=".76" fill="#4285f4"/><circle cx="18.02" cy="9.76" r=".76" fill="#4285f4"/><circle cx="18.02" cy="3.48" r=".76" fill="#4285f4"/><path fill="#669df6" d="M12 15a.76.76 0 0 1-.75-.75v-1.91a.76.76 0 0 1 1.51 0v1.89A.76.76 0 0 1 12 15"/><circle cx="12" cy="16.45" r=".76" fill="#669df6"/><circle cx="12" cy="10.14" r=".76" fill="#669df6"/><circle cx="12" cy="7.92" r=".76" fill="#669df6"/><path fill="#4285f4" d="M15 10.54a.76.76 0 0 1-.75-.75V7.91a.76.76 0 1 1 1.51 0v1.88a.76.76 0 0 1-.76.75"/><circle cx="15.01" cy="5.69" r=".76" fill="#4285f4"/><circle cx="15.01" cy="14.19" r=".76" fill="#4285f4"/><circle cx="15.01" cy="11.97" r=".76" fill="#4285f4"/><circle cx="8.99" cy="14.19" r=".76" fill="#aecbfa"/><circle cx="8.99" cy="7.92" r=".76" fill="#aecbfa"/><circle cx="8.99" cy="5.69" r=".76" fill="#aecbfa"/><path fill="#aecbfa" d="M9 12.73a.76.76 0 0 1-.76-.73v-1.9a.75.75 0 1 1 1.5 0V12a.75.75 0 0 1-.74.73"/></svg>
+    <text x="860" y="508.0" font-size="16" font-weight="bold" fill="#202124">ADK Agent</text>
+    <text x="860" y="530.0" font-size="12" fill="#5f6368">Gemini 3.5 Flash・自律判断</text>
+  </g>
+
+  
+  <g filter="url(#shadow)">
+    <rect x="1150" y="210" width="270" height="70" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="1166" y="225.0" width="40" height="40" viewBox="0 0 24 24"><path fill="#4285f4" d="M11 2h2v20h-2z"/><path fill="none" d="M0 0h24v24H0z"/><path fill="#4285f4" d="M7 8h2v8H7zm8 0h2v8h-2zM3 5h2v14H3zm16 0h2v14h-2z"/><path fill="#669df6" d="M11 2h2v10h-2zM7 8h2v4H7zm8 0h2v4h-2zM3 5h2v7H3zm16 0h2v7h-2z"/></svg>
+    <text x="1220" y="241.0" font-size="16" font-weight="bold" fill="#202124">Speech-to-Text</text>
+    <text x="1220" y="263.0" font-size="12" fill="#5f6368">話者別の文字起こし</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="1150" y="320" width="270" height="70" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="1166" y="335.0" width="40" height="40" viewBox="0 0 24 24"><path fill="#669df6" d="M20 13.89a.77.77 0 0 0-1-.16l-7 5.14v.22a.72.72 0 1 1 0 1.43a.74.74 0 0 0 .45-.15l7.41-5.47a.76.76 0 0 0 .14-1.01"/><path fill="#aecbfa" d="M12 20.52a.72.72 0 0 1 0-1.43v-.22l-7-5.14a.76.76 0 0 0-1 .16a.74.74 0 0 0 .16 1l7.41 5.47a.73.73 0 0 0 .44.15Z"/><path fill="#4285f4" d="M12 18.34a1.47 1.47 0 1 0 1.47 1.47A1.47 1.47 0 0 0 12 18.34m0 2.18a.72.72 0 1 1 .72-.71a.71.71 0 0 1-.72.71"/><path fill="#aecbfa" d="M6 6.11a.76.76 0 0 1-.75-.75V3.48a.76.76 0 1 1 1.51 0v1.88a.76.76 0 0 1-.76.75"/><circle cx="5.98" cy="12" r=".76" fill="#aecbfa"/><circle cx="5.98" cy="9.79" r=".76" fill="#aecbfa"/><circle cx="5.98" cy="7.57" r=".76" fill="#aecbfa"/><path fill="#4285f4" d="M18 8.31a.76.76 0 0 1-.75-.76V5.67a.75.75 0 1 1 1.5 0v1.88a.75.75 0 0 1-.75.76"/><circle cx="18.02" cy="12.01" r=".76" fill="#4285f4"/><circle cx="18.02" cy="9.76" r=".76" fill="#4285f4"/><circle cx="18.02" cy="3.48" r=".76" fill="#4285f4"/><path fill="#669df6" d="M12 15a.76.76 0 0 1-.75-.75v-1.91a.76.76 0 0 1 1.51 0v1.89A.76.76 0 0 1 12 15"/><circle cx="12" cy="16.45" r=".76" fill="#669df6"/><circle cx="12" cy="10.14" r=".76" fill="#669df6"/><circle cx="12" cy="7.92" r=".76" fill="#669df6"/><path fill="#4285f4" d="M15 10.54a.76.76 0 0 1-.75-.75V7.91a.76.76 0 1 1 1.51 0v1.88a.76.76 0 0 1-.76.75"/><circle cx="15.01" cy="5.69" r=".76" fill="#4285f4"/><circle cx="15.01" cy="14.19" r=".76" fill="#4285f4"/><circle cx="15.01" cy="11.97" r=".76" fill="#4285f4"/><circle cx="8.99" cy="14.19" r=".76" fill="#aecbfa"/><circle cx="8.99" cy="7.92" r=".76" fill="#aecbfa"/><circle cx="8.99" cy="5.69" r=".76" fill="#aecbfa"/><path fill="#aecbfa" d="M9 12.73a.76.76 0 0 1-.76-.73v-1.9a.75.75 0 1 1 1.5 0V12a.75.75 0 0 1-.74.73"/></svg>
+    <text x="1220" y="351.0" font-size="16" font-weight="bold" fill="#202124">Gemini API</text>
+    <text x="1220" y="373.0" font-size="12" fill="#5f6368">議事録生成・用語補正</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="1150" y="500" width="270" height="70" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="1166" y="515.0" width="40" height="40" viewBox="0 0 24 24"><path fill="#aecbfa" d="M2 4h20v7H2z"/><path fill="#669df6" d="M20 4h2v7h-2z"/><path fill="#4285f4" d="M22 4h-2v7z"/><path fill="#669df6" d="M2 4h2v7H2z"/><path fill="#fff" d="M6 7h6v1H6z"/><rect width="3" height="3" x="15" y="6" fill="#fff" rx="1.5"/><path fill="#aecbfa" d="M2 13h20v7H2z"/><path fill="#669df6" d="M20 13h2v7h-2z"/><path fill="#4285f4" d="M22 13h-2v7z"/><path fill="#669df6" d="M2 13h2v7H2z"/><path fill="#fff" d="M6 16h6v1H6z"/><rect width="3" height="3" x="15" y="15" fill="#fff" rx="1.5"/></svg>
+    <text x="1220" y="531.0" font-size="16" font-weight="bold" fill="#202124">Cloud Storage</text>
+    <text x="1220" y="553.0" font-size="12" fill="#5f6368">録音 wav（30日で削除）</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="1150" y="610" width="270" height="70" rx="12" fill="white" stroke="#dadce0"/>
+    <svg x="1166" y="625.0" width="40" height="40" viewBox="0 0 24 24"><path fill="#669df6" d="m21 13l-9-4v4l9 4Zm0-7l-9-4v4l9 4Z"/><path fill="#aecbfa" d="m3 6l9-4v4l-9 4zm0 7l9-4v4l-9 4z"/><path fill="#4285f4" d="m12 18l3.37-1.5l4.51 2L12 22z"/></svg>
+    <text x="1220" y="641.0" font-size="16" font-weight="bold" fill="#202124">Firestore</text>
+    <text x="1220" y="663.0" font-size="12" fill="#5f6368">議事録 / 宿題 / 用語集 / メモリ</text>
+  </g>
+
+    <line x1="310" y1="175" x2="430" y2="182" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+  <rect x="318.9" y="143" width="106.19999999999999" height="20" rx="10" fill="#e8f0fe"/><text x="372" y="158" text-anchor="middle" font-size="12" fill="#1967d2">/join /stop</text>
+    <line x1="310" y1="375" x2="430" y2="372" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+  <rect x="333.3" y="343" width="73.39999999999999" height="20" rx="10" fill="#e8f0fe"/><text x="370" y="358" text-anchor="middle" font-size="12" fill="#1967d2">録音（話者別）</text>
+    <path d="M 310 215 L 360 215 L 360 292 L 745 292 L 745 250 L 790 250" fill="none" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+  <rect x="380.0" y="267" width="180.0" height="20" rx="10" fill="#e8f0fe"/><text x="470" y="282" text-anchor="middle" font-size="12" fill="#1967d2">/ask /actions /setup</text>
+    <line x1="570" y1="226" x2="570" y2="340" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+  <rect x="578.3" y="303" width="73.39999999999999" height="20" rx="10" fill="#e8f0fe"/><text x="615" y="318" text-anchor="middle" font-size="12" fill="#1967d2">enqueue</text>
+    <line x1="710" y1="375" x2="790" y2="358" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+  <rect x="727.6" y="337" width="48.8" height="20" rx="10" fill="#e8f0fe"/><text x="752" y="352" text-anchor="middle" font-size="12" fill="#1967d2">HTTP</text>
+    <line x1="710" y1="485" x2="800" y2="380" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+  <rect x="723.6" y="439" width="48.8" height="20" rx="10" fill="#e8f0fe"/><text x="748" y="454" text-anchor="middle" font-size="12" fill="#1967d2">HTTP</text>
+    <line x1="930" y1="390" x2="930" y2="470" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+    <line x1="1070" y1="245" x2="1150" y2="245" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+    <line x1="1070" y1="355" x2="1150" y2="355" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+    <line x1="1070" y1="505" x2="1150" y2="528" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+  <rect x="1083.6" y="485" width="48.8" height="20" rx="10" fill="#e8f0fe"/><text x="1108" y="500" text-anchor="middle" font-size="12" fill="#1967d2">音声取得</text>
+    <line x1="1070" y1="530" x2="1150" y2="638" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+  <rect x="1034.8" y="583" width="114.39999999999999" height="20" rx="10" fill="#e8f0fe"/><text x="1092" y="598" text-anchor="middle" font-size="12" fill="#1967d2">read / write</text>
+    <line x1="790" y1="530" x2="310" y2="640" stroke="#80868b" stroke-width="2.2" marker-end="url(#arr)"/>
+  <rect x="478.7" y="583" width="122.6" height="20" rx="10" fill="#e8f0fe"/><text x="540" y="598" text-anchor="middle" font-size="12" fill="#1967d2">Webhook で自動投稿</text>
+</svg>
