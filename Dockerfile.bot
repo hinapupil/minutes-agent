@@ -11,6 +11,12 @@ RUN apt-get update \
 
 COPY requirements.txt pyproject.toml README.md ./
 RUN pip install --no-cache-dir -r requirements.txt
+# davey (DAVE/E2EE 実装) を明示的に外す。同梱されていると Bot が「E2EE対応」を
+# 申告してしまい、py-cord 2.8 は受信側の DAVE 復号が未実装のため録音が
+# corrupted stream で壊れる。davey 無しなら Discord が通話を非E2EEに
+# ダウングレードし（DAVE 移行期の仕様）、平文 opus を受信できる。
+# upstream の受信側 DAVE 対応 (pycord#3159, milestone 2.9) が入ったら外す → issue #34
+RUN pip uninstall -y davey
 
 COPY agent ./agent
 COPY bot ./bot
