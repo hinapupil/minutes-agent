@@ -396,7 +396,7 @@ class RecordingCog(commands.Cog):
         # （話者別ファイル分離のキー）。legacy の client プロパティの実体は vc
         sink.vc = voice_client
 
-        def finished_callback(*args: object) -> None:
+        def finished_callback(*args: Any) -> None:
             error = next((arg for arg in args if isinstance(arg, Exception)), None)
             # 2.8 の after コールバックは reader スレッドから同期で呼ばれるため
             # loop.create_task ではなく thread-safe な投入を使う
@@ -405,9 +405,11 @@ class RecordingCog(commands.Cog):
             )
 
         with warnings.catch_warnings():
-            # upstream の「受信は壊れている」告知 (RuntimeWarning)。本シムで対応済みのため抑制
+            # upstream の「受信は壊れている」告知 (RuntimeWarning)。#3159 系で対応中のため抑制
             warnings.simplefilter("ignore", RuntimeWarning)
-            voice_client.start_recording(sink, finished_callback)
+            # AfterCallback の形が 2.8.0 (exception,) と #3159 (sink, *args) で異なるため
+            # 実行時は *args から Exception を探す両対応実装 + 型は cast で吸収
+            voice_client.start_recording(sink, cast(Any, finished_callback))
         self._active[guild.id] = recording
         return f"meeting_id: `{meeting_id}`"
 
