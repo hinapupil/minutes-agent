@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import unittest
+import urllib.parse
 import urllib.request
 from typing import Any
 from unittest.mock import patch
@@ -159,13 +160,14 @@ class FetchRepoGlossaryEndToEndTest(unittest.TestCase):
 
         def fake_urlopen(request: urllib.request.Request, timeout: int = 30) -> _FakeResponse:
             url = request.full_url
+            host = urllib.parse.urlparse(url).hostname
             if url.endswith("/repos/hinapupil/minutes-agent"):
                 return _FakeResponse(json.dumps(repo_info).encode("utf-8"))
             if "git/trees/main" in url:
                 return _FakeResponse(json.dumps(tree_response).encode("utf-8"))
             if "contributors" in url:
                 return _FakeResponse(json.dumps(contributors_response).encode("utf-8"))
-            if "raw.githubusercontent.com" in url:
+            if host == "raw.githubusercontent.com":
                 return _FakeResponse(b"# README\nMiyaIF is a contributor.")
             raise AssertionError(f"unexpected url: {url}")
 
