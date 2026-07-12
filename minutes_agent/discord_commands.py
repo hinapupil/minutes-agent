@@ -89,6 +89,7 @@ def register_interaction_commands(
         headers={
             "Authorization": f"Bot {actual_settings.discord_bot_token}",
             "Content-Type": "application/json",
+            "User-Agent": "MinutesAgent (https://github.com/hinapupil/minutes-agent, 0.1)",
         },
     )
     with urllib.request.urlopen(request, timeout=60) as response:

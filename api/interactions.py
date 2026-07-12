@@ -204,7 +204,10 @@ def _safe_attachment_filename(filename: str) -> str:
 def _download_attachment(url: str, download_path: Path, *, max_bytes: int) -> None:
     if max_bytes <= 0:
         raise ValueError("attachment max bytes must be positive")
-    request = urllib.request.Request(url)
+    request = urllib.request.Request(
+        url,
+        headers={"User-Agent": "MinutesAgent (https://github.com/hinapupil/minutes-agent, 0.1)"},
+    )
     try:
         with urllib.request.urlopen(request, timeout=60) as response:
             content_length = response.headers.get("Content-Length")
