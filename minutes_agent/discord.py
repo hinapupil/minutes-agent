@@ -87,7 +87,11 @@ class DiscordNotifier:
         request = urllib.request.Request(
             url,
             data=body,
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                # urllib デフォルト UA は Cloudflare に 403 (error 1010) で弾かれる
+                "User-Agent": "MinutesAgent (https://github.com/hinapupil/minutes-agent, 0.1)",
+            },
             method="POST",
         )
         try:
