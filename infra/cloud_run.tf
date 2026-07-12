@@ -119,6 +119,12 @@ resource "google_cloud_run_v2_service" "interactions" {
     containers {
       image = local.api_image
 
+      # /ask 等は Discord への deferred 応答後に BackgroundTasks で処理を続けるため、
+      # リクエスト外 CPU スロットリングを無効化する（無いと処理が飢餓状態でハングする。E2E実測）
+      resources {
+        cpu_idle = false
+      }
+
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
         value = var.project_id
