@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
 
+# GITHUB_TOKEN は既定で広い権限を持つため、read に絞る
+# (CodeQL actions/missing-workflow-permissions への対応)
+permissions:
+  contents: read
+
 jobs:
   python:
     runs-on: ubuntu-latest
@@ -26,6 +31,10 @@ jobs:
   # 秘密情報の混入検知（ローカルの lefthook pre-commit と同じ gitleaks を CI でも強制）
   gitleaks:
     runs-on: ubuntu-latest
+    # gitleaks-action は GITHUB_TOKEN で PR コミットの取得とコメント投稿を行う
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
         with:
