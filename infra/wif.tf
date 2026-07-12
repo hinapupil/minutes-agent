@@ -23,8 +23,9 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   }
 
   # このリポジトリの main ブランチの workflow 以外からのトークンを拒否する (CKV_GCP_125)。
-  # deploy.yml は push:main と workflow_dispatch（main 上で実行）のみなので sub をブランチまで固定できる
-  attribute_condition = "assertion.sub == \"repo:${var.github_repository}:ref:refs/heads/main\""
+  # deploy.yml は push:main と workflow_dispatch（main 上で実行）のみなので sub をブランチまで固定できる。
+  # 注: checkov が Terraform 変数を解決できないためリテラルで記述（var.github_repository と一致させること）
+  attribute_condition = "assertion.sub == 'repo:hinapupil/minutes-agent:ref:refs/heads/main'"
 }
 
 resource "google_service_account" "deploy" {
@@ -33,30 +34,48 @@ resource "google_service_account" "deploy" {
   description  = "deploy.yml がイメージ push / Cloud Run デプロイ / GCE reset に使う"
 }
 
-# リポジトリの GitHub Actions だけが deploy SA を借用できる
+# main ブランチの workflow の subject だけが deploy SA を借用できる
+# （repository 単位の principalSet ではなく subject 単位の principal で最小化）
 resource "google_service_account_iam_member" "deploy_wif" {
   service_account_id = google_service_account.deploy.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_actions.name}/attribute.repository/${var.github_repository}"
+  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github_actions.name}/subject/repo:${var.github_repository}:ref:refs/heads/main"
 }
 
-# deploy.yml の各ステップに必要な最小権限
-resource "google_project_iam_member" "deploy_artifact_writer" {
-  project = var.project_id
-  role    = "roles/artifactregistry.writer"
-  member  = "serviceAccount:${google_service_account.deploy.email}"
+# --- deploy.yml の各ステップに必要な最小権限（すべてリソース単位で付与） ---
+
+# イメージ push: 対象 Artifact Registry リポジトリのみ
+resource "google_artifact_registry_repository_iam_member" "deploy_writer" {
+  location   = var.region
+  repository = google_artifact_registry_repository.containers.repository_id
+  role       = "roles/artifactregistry.writer"
+  member     = "serviceAccount:${google_service_account.deploy.email}"
 }
 
-resource "google_project_iam_member" "deploy_run_developer" {
-  project = var.project_id
-  role    = "roles/run.developer"
-  member  = "serviceAccount:${google_service_account.deploy.email}"
+# Cloud Run デプロイ: 対象2サービスのみ
+resource "google_cloud_run_v2_service_iam_member" "deploy_agent" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.agent.name
+  role     = "roles/run.developer"
+  member   = "serviceAccount:${google_service_account.deploy.email}"
 }
 
-resource "google_project_iam_member" "deploy_compute_admin" {
-  project = var.project_id
-  role    = "roles/compute.instanceAdmin.v1"
-  member  = "serviceAccount:${google_service_account.deploy.email}"
+resource "google_cloud_run_v2_service_iam_member" "deploy_interactions" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.interactions.name
+  role     = "roles/run.developer"
+  member   = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+# GCE reset: Bot インスタンス1台のみ
+resource "google_compute_instance_iam_member" "deploy_bot_instance" {
+  project       = var.project_id
+  zone          = var.zone
+  instance_name = google_compute_instance.bot.name
+  role          = "roles/compute.instanceAdmin.v1"
+  member        = "serviceAccount:${google_service_account.deploy.email}"
 }
 
 # Cloud Run サービス（agent SA で動く）を更新するには actAs が必要
