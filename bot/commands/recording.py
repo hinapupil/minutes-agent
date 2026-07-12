@@ -61,6 +61,7 @@ class RecordingPromptView(discord.ui.View):
         self._voice_channel_id = voice_channel_id
         self._text_channel = text_channel
         self.message: Any | None = None
+        self._resolved = False
 
     @discord.ui.button(label="録音する", style=discord.ButtonStyle.success)
     async def start_recording(
@@ -88,8 +89,18 @@ class RecordingPromptView(discord.ui.View):
                 "録音開始確認は終了しました。すでに録音中です",
             )
             return
+        if self._resolved:
+            await interaction.response.send_message("このプロンプトは対応済みです", ephemeral=True)
+            return
 
-        await interaction.response.defer(ephemeral=True)
+        actor_name = getattr(member, "display_name", "不明")
+        # 二重押し防止: 押した瞬間にボタンを無効化し、誰が押したかを表示する
+        self._resolved = True
+        self._disable_items()
+        await interaction.response.edit_message(
+            content=f"⏺️ {actor_name} さんが録音を開始しています...",
+            view=self,
+        )
         try:
             content = await self._cog._start_recording(
                 guild,
@@ -97,10 +108,18 @@ class RecordingPromptView(discord.ui.View):
                 voice_channel=voice_state.channel,
             )
         except Exception as exc:
+            # 失敗してもボタンは復活させない（再試行は新しいプロンプト or /join で）
+            await self._cog._close_recording_prompt(
+                guild.id,
+                f"⚠️ 録音開始に失敗しました（{actor_name} さん実行）。/join で再試行可",
+            )
             await interaction.followup.send(f"録音開始に失敗しました: {exc}", ephemeral=True)
             return
         await interaction.followup.send(content, ephemeral=True)
-        await self._cog._close_recording_prompt(guild.id, "録音を開始しました")
+        await self._cog._close_recording_prompt(
+            guild.id,
+            f"⏺️ 録音を開始しました（開始: {actor_name} さん）",
+        )
 
     @discord.ui.button(label="今回はしない", style=discord.ButtonStyle.secondary)
     async def decline_recording(
@@ -113,10 +132,18 @@ class RecordingPromptView(discord.ui.View):
         if guild is None:
             await interaction.response.send_message("ギルド内で実行してください", ephemeral=True)
             return
+        if self._resolved:
+            await interaction.response.send_message("このプロンプトは対応済みです", ephemeral=True)
+            return
+        actor_name = getattr(interaction.user, "display_name", "不明")
+        self._resolved = True
         self._disable_items()
         self.stop()
         self._cog._prompts.pop(guild.id, None)
-        await interaction.response.edit_message(content="今回は録音しません", view=self)
+        await interaction.response.edit_message(
+            content=f"🚫 今回は録音しません（{actor_name} さんが選択）",
+            view=self,
+        )
 
     async def on_timeout(self) -> None:
         await self._cog._close_recording_prompt(
@@ -340,6 +367,7 @@ class RecordingCog(commands.Cog):
         prompt = self._prompts.pop(guild_id, None)
         if prompt is None:
             return
+        prompt.view._resolved = True
         prompt.view._disable_items()
         prompt.view.stop()
         await prompt.message.edit(content=content, view=prompt.view)
