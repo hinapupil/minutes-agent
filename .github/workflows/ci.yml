@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # 全履歴を走査するため
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
