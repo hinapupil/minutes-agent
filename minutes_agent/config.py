@@ -71,7 +71,9 @@ class Settings:
         default_factory=lambda: int(_env("SPEECH_BATCH_TIMEOUT_SECONDS", "1800") or "1800")
     )
     speech_enable_diarization: bool = field(
-        default_factory=lambda: (_env("SPEECH_ENABLE_DIARIZATION", "true") or "true").lower()
+        # 話者は録音段階でファイル単位に分離済み（WaveSink）のため diarization は不要。
+        # かつ chirp_2 recognizer は speaker_diarization 非対応（有効だと 400 になる。E2E実測）
+        default_factory=lambda: (_env("SPEECH_ENABLE_DIARIZATION", "false") or "false").lower()
         in {"1", "true", "yes", "on"}
     )
     speech_min_speaker_count: int = field(
