@@ -5,6 +5,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# 連続マージ時に並列デプロイが gcloud の楽観ロックで衝突するため直列化する
+# （cancel-in-progress: false = 後続はキュー待ち。各 run は自分の SHA をデプロイ）
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 env:
   REGION: asia-northeast1
   REPOSITORY: minutes-agent
