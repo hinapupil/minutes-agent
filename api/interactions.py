@@ -354,14 +354,29 @@ def _message(content: str, *, ephemeral: bool) -> dict[str, Any]:
     return {"type": RESPONSE_CHANNEL_MESSAGE, "data": payload}
 
 
+# Discord のメッセージ本文は 2000 字が上限。超えると interaction 応答ごと
+# 無効化され「時間内に応答しませんでした」になるため、余裕を持って切り詰める
+_ACTIONS_MESSAGE_LIMIT = 1900
+
+
 def _format_actions(actions: list[Any]) -> str:
     if not actions:
         return "未完了のアクションアイテムはありません"
     lines = ["未完了アクションアイテム"]
+    total = len(lines[0])
+    shown = 0
     for item in actions:
         due = item.due_date.date().isoformat() if item.due_date else "期限未設定"
         assignee = item.assignee or "担当者未設定"
-        lines.append(f"- `{item.action_id}` {item.title} / {assignee} / {due}")
+        line = f"- `{item.action_id}` {item.title} / {assignee} / {due}"
+        if total + len(line) + 1 > _ACTIONS_MESSAGE_LIMIT:
+            break
+        lines.append(line)
+        total += len(line) + 1
+        shown += 1
+    omitted = len(actions) - shown
+    if omitted > 0:
+        lines.append(f"…他 {omitted} 件")
     return "\n".join(lines)
 
 
