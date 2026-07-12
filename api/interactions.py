@@ -97,7 +97,8 @@ async def handle_interaction(
         item = workflow.complete_action(action_id)
         if item is None:
             return _message(f"`{action_id}` は見つかりませんでした", ephemeral=True)
-        return _message(f"`{action_id}` を完了にしました", ephemeral=True)
+        # 完了はチームへの報告なので公開する（読み取り系の /actions は ephemeral のまま）
+        return _message(f"✅ `{action_id}` {item.title} を完了にしました", ephemeral=False)
 
     if command_name == "setup":
         repo = str(_option_value(payload, "repo") or "").strip()
