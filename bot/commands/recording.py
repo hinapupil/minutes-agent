@@ -137,12 +137,11 @@ class RecordingPromptView(discord.ui.View):
             return
         actor_name = getattr(interaction.user, "display_name", "不明")
         self._resolved = True
-        self._disable_items()
         self.stop()
         self._cog._prompts.pop(guild.id, None)
         await interaction.response.edit_message(
             content=f"🚫 今回は録音しません（{actor_name} さんが選択）",
-            view=self,
+            view=None,
         )
 
     async def on_timeout(self) -> None:
@@ -369,9 +368,10 @@ class RecordingCog(commands.Cog):
         if prompt is None:
             return
         prompt.view._resolved = True
-        prompt.view._disable_items()
         prompt.view.stop()
-        await prompt.message.edit(content=content, view=prompt.view)
+        # 解決済みプロンプトはボタンを撤去し「決定の記録」テキストにする
+        # （無効化ボタンを残すより、済んだ選択はテキストで伝えるのが UI 原則）
+        await prompt.message.edit(content=content, view=None)
 
     async def _on_recording_finished(
         self,
