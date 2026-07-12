@@ -43,6 +43,10 @@ class CompatWaveSink(discord.sinks.WaveSink):
     # 補助イベント（speaking start/stop 等）は購読しない
     __sink_listeners__: list[tuple[str, str]] = []
 
+    def is_opus(self) -> bool:
+        # False = デコーダに opus→PCM 変換を要求（WaveSink は PCM 前提）
+        return False
+
     def walk_children(self, *, with_self: bool = False) -> Iterator[CompatWaveSink]:
         if with_self:
             yield self
@@ -380,6 +384,9 @@ class RecordingCog(commands.Cog):
             text_messages=[],
         )
         sink = CompatWaveSink()
+        # 2.8 の PacketDecoder は sink.client (= self.vc) 経由で ssrc→ユーザーを解決する
+        # （話者別ファイル分離のキー）。legacy の client プロパティの実体は vc
+        sink.vc = voice_client
 
         def finished_callback(*args: object) -> None:
             error = next((arg for arg in args if isinstance(arg, Exception)), None)
