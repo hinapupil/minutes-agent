@@ -39,10 +39,12 @@ class CompatWaveSinkTest(unittest.TestCase):
     def test_router_contract_attributes_exist(self) -> None:
         sink = CompatWaveSink()
 
-        # 2.8 の SinkEventRouter が要求する契約
+        # 2.8 の SinkEventRouter / PacketDecoder が要求する契約
         self.assertEqual(sink.__sink_listeners__, [])
         self.assertEqual(list(sink.walk_children()), [])
         self.assertEqual(list(sink.walk_children(with_self=True)), [sink])
+        self.assertFalse(sink.is_opus())
+        self.assertIsNone(sink.client)
 
 
 if __name__ == "__main__":
