@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import shutil
-import zipfile
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -171,50 +170,6 @@ class RecordingCog(commands.Cog):
             return
         voice_client.stop_recording()
         await ctx.respond("録音を停止しました。議事録生成ジョブを登録します", ephemeral=True)
-
-    @discord.slash_command(
-        name="minutes",
-        description="音声ファイルまたは zip から議事録を生成します",
-    )
-    async def minutes(self, ctx: discord.ApplicationContext, file: discord.Attachment) -> None:
-        if ctx.guild is None:
-            await ctx.respond("ギルド内で実行してください", ephemeral=True)
-            return
-        await ctx.defer(ephemeral=True)
-        meeting_id = uuid4().hex
-        target_dir = self._settings.local_recordings_dir / meeting_id / "manual"
-        target_dir.mkdir(parents=True, exist_ok=True)
-        downloaded = target_dir / file.filename
-        await file.save(downloaded)
-        try:
-            expanded_files = _expand_audio_files(downloaded, target_dir / "zip")
-            audio_files = self._upload_paths(meeting_id, expanded_files)
-            participants = [Participant(user_id=str(ctx.author.id), display_name=str(ctx.author))]
-            channel_id = str(cast(Any, ctx.channel).id)
-            request = GenerateMinutesRequest(
-                meeting_id=meeting_id,
-                guild_id=str(ctx.guild.id),
-                channel_id=channel_id,
-                participants=participants,
-                audio_files=audio_files,
-            )
-            FirestoreRepository(self._settings).save_meeting(
-                MeetingRecord(
-                    meeting_id=meeting_id,
-                    guild_id=request.guild_id,
-                    channel_id=request.channel_id,
-                    participants=participants,
-                    audio_files=audio_files,
-                    text_messages=[],
-                )
-            )
-            task_name = CloudTasksPublisher(self._settings).enqueue_generate_minutes(request)
-            await ctx.followup.send(
-                f"議事録生成ジョブを登録しました\nmeeting_id: `{meeting_id}`\ntask: `{task_name}`",
-                ephemeral=True,
-            )
-        except Exception as exc:
-            await ctx.followup.send(f"添付ファイル処理に失敗しました: {exc}", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -501,22 +456,3 @@ def _should_offer_recording_prompt(
     if len(_human_members(after_channel)) != 1:
         return False
     return last_prompted_at is None or now - last_prompted_at >= PROMPT_COOLDOWN
-
-
-def _expand_audio_files(path: Path, output_dir: Path) -> list[Path]:
-    audio_suffixes = {".wav", ".mp3", ".m4a", ".flac", ".ogg", ".opus", ".webm"}
-    if path.suffix.lower() != ".zip":
-        if path.suffix.lower() not in audio_suffixes:
-            raise ValueError(f"unsupported attachment type: {path.suffix}")
-        return [path]
-    output_dir.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(path) as archive:
-        archive.extractall(output_dir)
-    files = [
-        child
-        for child in output_dir.rglob("*")
-        if child.is_file() and child.suffix.lower() in audio_suffixes
-    ]
-    if not files:
-        raise ValueError("zip did not contain supported audio files")
-    return files
