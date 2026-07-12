@@ -47,27 +47,38 @@ LANDING_HTML = """<!DOCTYPE html>
       （お手持ちの Discord アカウントでどうぞ）</li>
   <li>任意のチャンネルで <code>/ask 最近なにを決めた？</code> を実行 —
       ADK Agent が過去議事録を自律検索して回答します</li>
-  <li><code>/minutes</code> に音声ファイル（wav / mp3 / m4a 等）を添付 —
-      Cloud Tasks → Speech-to-Text → Gemini のパイプラインが走り、
-      数分で <code>#議事録</code> チャンネルに議事録とアクションアイテムが投稿されます</li>
-  <li><code>/actions</code> で抽出済みアクションアイテムの一覧、
-      <code>/action-done &lt;id&gt;</code> で完了化を確認できます</li>
   <li><code>/setup repo:&lt;owner/repo&gt;</code> — お好きな public リポジトリを指定すると、
       エージェントが README・docs・コントリビューターを読んで議事録用の用語集を学習します
       （音声認識の固有名詞補正に使われます）</li>
+  <li><code>/actions</code> で抽出済みアクションアイテムの一覧、
+      <code>/action-done &lt;id&gt;</code> で完了化を確認できます</li>
 </ol>
+
+<h3>録音 → 議事録のパイプラインを検証するには</h3>
+<ul>
+  <li><strong>本命: ライブ録音</strong> — ボイスチャンネルで <code>/join</code> →
+      会話 → <code>/stop</code>。話者別に録音され、数分で <code>#議事録</code> に
+      議事録・アクションアイテム・継続確認（前回決定事項との突き合わせ）が自動投稿されます。
+      会話相手が必要なため、お一人の場合はデモ動画でご確認ください</li>
+  <li><strong>お一人でも試せる手動経路</strong> — <code>/minutes</code> に音声ファイル
+      （wav / mp3 / m4a / flac / ogg、zip も可）を添付すると、同じ
+      Cloud Tasks → Speech-to-Text → Gemini のパイプラインが走ります</li>
+</ul>
 <p>毎日 10:00 (JST) には Cloud Scheduler 起点でエージェントが未完了アクションを
 自律判定し、期限切れ・期限間近のものをリマインド投稿します（between-meetings の自律動作）。</p>
 
 <h2>🧭 なぜ「デモサーバー招待」方式か</h2>
-<p>本プロダクトの価値は「<strong>複数話者の実会議 → AI 議事録</strong>」です。
-お一人で bot をインストールしても、会議そのものが再現できません。
-そこで、実会議データと過去の議事録を仕込んだデモサーバーへの招待を選びました。
-<strong>着席後3分で全機能を試せます</strong>
-（<a href="https://github.com/hinapupil/minutes-agent/blob/main/docs/adr/0004-demo-server-as-judge-verification-path.md">ADR-0004</a>）。
-設計はギルド単位（Firestore <code>guild_settings</code>）で実装済みのため、
-インストール型への移行は投稿経路の切り替えだけです
-（ロードマップ: <a href="https://github.com/hinapupil/minutes-agent/issues/57">#57</a>）。</p>
+<p>通常の Discord bot は、利用者が自分のサーバーにインストールして使います。
+しかし本プロダクトの中心機能は「<strong>複数人の音声会議を録音して議事録にする</strong>」ことなので、
+お一人でインストールしても肝心の会議を体験できません。</p>
+<p>そこで審査用には、実際の会議の録音・議事録・アクションアイテムが
+すでに入った<strong>デモサーバー</strong>をご用意しました。参加すればすぐに
+<code>/ask</code> や <code>/actions</code> で「過去の会議が蓄積されたサーバー」を
+そのまま体験できます
+（この判断の記録: <a href="https://github.com/hinapupil/minutes-agent/blob/main/docs/adr/0004-demo-server-as-judge-verification-path.md">ADR-0004</a>）。</p>
+<p>内部はサーバー（ギルド）単位の設定で設計してあり、一般公開（インストール型）への
+移行は議事録の投稿先まわりの切り替えのみで、ロードマップとして管理しています
+（<a href="https://github.com/hinapupil/minutes-agent/issues/57">#57</a>）。</p>
 
 <h2>🏗️ 構成（すべて Google Cloud）</h2>
 <p>GCE (Pycord Bot / voice録音) → Cloud Storage → Cloud Tasks →
