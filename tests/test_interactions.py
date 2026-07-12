@@ -119,5 +119,40 @@ class SetupCommandValidationTest(unittest.TestCase):
         self.assertIsNotNone(REPO_SLUG_PATTERN.match("hinapupil/minutes-agent"))
 
 
+class FormatActionsTest(unittest.TestCase):
+    def _make_items(self, count: int) -> list:
+        from minutes_agent.models import ActionItem
+
+        return [
+            ActionItem(
+                action_id=f"{i:032x}",
+                meeting_id="m1",
+                title=f"アクションアイテムのタイトルその{i}（長めの説明つき）",
+                assignee="hina",
+                status="open",
+            )
+            for i in range(count)
+        ]
+
+    def test_empty_list(self) -> None:
+        from api.interactions import _format_actions
+
+        self.assertEqual(_format_actions([]), "未完了のアクションアイテムはありません")
+
+    def test_small_list_shows_all_items(self) -> None:
+        from api.interactions import _format_actions
+
+        content = _format_actions(self._make_items(5))
+        self.assertEqual(content.count("- `"), 5)
+        self.assertNotIn("…他", content)
+
+    def test_long_list_is_truncated_under_discord_limit(self) -> None:
+        from api.interactions import _format_actions
+
+        content = _format_actions(self._make_items(60))
+        self.assertLessEqual(len(content), 2000)
+        self.assertIn("…他", content)
+
+
 if __name__ == "__main__":
     unittest.main()

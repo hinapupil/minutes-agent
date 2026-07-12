@@ -118,7 +118,9 @@ resource "google_cloud_run_v2_service" "interactions" {
     max_instance_request_concurrency = 1
 
     scaling {
-      min_instance_count = 0
+      # Discord Interactions は 3 秒以内の初期応答が必須で、cold start だと
+      # 間に合わず「時間内に応答しませんでした」になる。常時 1 台ウォームに保つ
+      min_instance_count = 1
       max_instance_count = 3
     }
 
