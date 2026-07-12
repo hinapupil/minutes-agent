@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
-from starlette.responses import JSONResponse, Response
+from starlette.responses import HTMLResponse, JSONResponse, Response
 
 from api.interactions import handle_interaction
 from api.tasks import ActionsCommandRequest, AskCommandRequest, CompleteActionRequest
@@ -25,6 +25,13 @@ async def enforce_route_profile(
             content={"detail": "route is not enabled on this service"},
         )
     return await call_next(request)
+
+
+@app.get("/", include_in_schema=False)
+def landing() -> HTMLResponse:
+    from api.landing import LANDING_HTML
+
+    return HTMLResponse(content=LANDING_HTML)
 
 
 @app.get("/health")
@@ -171,7 +178,7 @@ def _oidc_audience_for_request(settings: Settings, request: Request | None) -> s
 def _route_allowed(settings: Settings, path: str) -> bool:
     profile = settings.route_profile.lower()
     if profile == "public":
-        return path in {"/health", "/interactions"}
+        return path in {"/", "/health", "/interactions"}
     if profile == "internal":
         return path == "/health" or path.startswith("/tasks/") or path.startswith("/commands/")
     return True

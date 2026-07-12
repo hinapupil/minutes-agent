@@ -96,6 +96,8 @@ class PrReviewFixesTest(unittest.TestCase):
         self.assertEqual(audience, "https://internal.example.run.app/tasks/generate-minutes")
 
     def test_route_profiles_split_public_and_internal_paths(self) -> None:
+        self.assertTrue(_route_allowed(Settings(route_profile="public"), "/"))
+        self.assertFalse(_route_allowed(Settings(route_profile="internal"), "/"))
         self.assertTrue(_route_allowed(Settings(route_profile="public"), "/interactions"))
         self.assertFalse(_route_allowed(Settings(route_profile="public"), "/tasks/check-actions"))
         self.assertTrue(_route_allowed(Settings(route_profile="internal"), "/commands/ask"))
