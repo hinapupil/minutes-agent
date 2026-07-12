@@ -4,21 +4,13 @@ import logging
 
 import discord
 
-# --- DAVE (E2EE) オプトアウト ---
-# py-cord 2.8 は davey 同梱時に max_dave_protocol_version>0 を申告し通話が
-# E2EE のまま維持されるが、受信側の DAVE 復号が未実装（pycord#3139）のため
-# 録音が corrupted stream で壊れる。davey を uninstall すると
-# voice/__init__.py が import 時に MissingVoiceDependenciesError を投げるため、
-# davey は残したまま申告バージョンだけ 0 に固定する。
-# 申告 0 なら DAVE 移行期の仕様で Discord が通話を非E2EE にダウングレードし、
-# 平文 opus を受信できる（Craig 等の既存録音ボットと同じ動作条件）。
-# upstream の受信側 DAVE 対応（pycord#3159, milestone 2.9）が入ったら削除 → issue #34
-import discord.voice.state as _voice_state
-
+# DAVE(E2EE) メモ: 「申告0で非E2EEにダウングレード」は Discord 側が 4017 で拒否する
+# ため不可（移行期仕様は終了済み・2026-07-12 E2E実測）。現在は DAVE 実装が録音の
+# 必須条件のため、受信側 DAVE 復号を実装した upstream ブランチ pycord#3159 を
+# SHA 固定で先取りしている（requirements.txt 参照）。2.9 正式リリース後に
+# 通常のバージョン指定へ戻す → issue #34
 from bot.commands.recording import RecordingCog
 from minutes_agent.config import Settings, get_settings
-
-_voice_state.DAVE_PROTOCOL_VERSION = 0
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
