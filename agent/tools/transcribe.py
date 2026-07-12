@@ -10,10 +10,19 @@ from minutes_agent.models import TranscriptSegment
 class SpeechTranscriber:
     def __init__(self, settings: Settings) -> None:
         settings.require("google_cloud_project")
+        from google.api_core.client_options import ClientOptions
         from google.cloud import speech_v2
 
         self._settings = settings
-        self._client = speech_v2.SpeechClient()
+        # Speech V2 はリージョナル recognizer（asia-northeast1 等）を使う場合、
+        # クライアントも同リージョンのエンドポイントに向ける必要がある。
+        # デフォルト（グローバル）のままだと
+        # "400 Expected resource location to be global" になる（E2E 実測）
+        location = settings.google_cloud_location or "global"
+        options = None
+        if location != "global":
+            options = ClientOptions(api_endpoint=f"{location}-speech.googleapis.com")
+        self._client = speech_v2.SpeechClient(client_options=options)
 
     def transcribe_uri(
         self,
