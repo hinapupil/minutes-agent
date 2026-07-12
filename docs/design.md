@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Discord の定例ミーティングにおける **会議のアカウンタビリティ（説明責任・実行責任）** を自律的に管理する AI エージェント。
+Discord の定例ミーティングの **会議アカウンタビリティ（説明責任・実行責任）** を自律的に管理する AI エージェント。
 
 Bot が自ら voice channel に参加して録音し、文字起こし→議事録生成→アクションアイテム抽出→Discord 投稿までを全自動で行う。さらに、会議と会議の間（between-meetings）でアクションアイテムの追跡・リマインド・過去議事録の横断検索を自律的に実行する。
 
@@ -153,10 +153,10 @@ sequenceDiagram
 | 決定 | 理由 |
 |------|------|
 | GCE で Bot | Voice channel 参加に UDP が必要。Cloud Run は TCP/HTTP のみ |
-| Cloud Run で Agent API | AI 処理はリクエスト駆動。サーバーレスでスケーラブル。提出要件の「デプロイ済み URL」にもなる |
-| Cloud Tasks で中継 | 議事録生成は数分かかる。Bot → Agent の非同期実行を信頼性高く実現 |
+| Cloud Run で Agent API | AI 処理はリクエスト駆動。負荷に応じて自動スケールする。提出要件の「デプロイ済み URL」にもなる |
+| Cloud Tasks で中継 | 議事録生成は数分かかる。Bot → Agent の受け渡しを非同期化し、リトライも任せられる |
 | Firestore | ADK の Session/Memory 統合がビルトイン。議事録・アクションアイテムも同一 DB で管理 |
-| Cloud Scheduler | between-meetings のリマインド通知。エージェントの「自律的な行動」を定期実行で実現 |
+| Cloud Scheduler | between-meetings のリマインド通知。エージェントの「自律的な行動」の起点 |
 
 ## 5. Components
 
