@@ -183,3 +183,28 @@ class FetchRepoGlossaryEndToEndTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ParseJsonLenientlyTest(unittest.TestCase):
+    def test_plain_json_array(self) -> None:
+        from minutes_agent.github_glossary import _parse_json_leniently
+
+        self.assertEqual(_parse_json_leniently('["a", "b"]'), ["a", "b"])
+
+    def test_trailing_extra_data_is_ignored(self) -> None:
+        from minutes_agent.github_glossary import _parse_json_leniently
+
+        # 実測エラー "Extra data: line N column 1" の再現形: JSON 値の後ろに続きがある
+        self.assertEqual(
+            _parse_json_leniently('["a", "b"]\n["c"]'),
+            ["a", "b"],
+        )
+        self.assertEqual(
+            _parse_json_leniently('["a"]\n以上が用語集です。'),
+            ["a"],
+        )
+
+    def test_code_fenced_json(self) -> None:
+        from minutes_agent.github_glossary import _parse_json_leniently
+
+        self.assertEqual(_parse_json_leniently('```json\n["a", "b"]\n```'), ["a", "b"])

@@ -243,8 +243,23 @@ def _distill_glossary(
     text = getattr(response, "text", None)
     if not text:
         raise RuntimeError("Gemini response did not contain text")
-    payload = json.loads(text)
+    payload = _parse_json_leniently(text)
     return _normalize_glossary(payload)
+
+
+def _parse_json_leniently(text: str) -> Any:
+    # response_mime_type="application/json" 指定でも、モデルは JSON 値の後ろに
+    # 余分なテキストや2つ目の JSON を続けることがある（実測: "Extra data" エラー）。
+    # コードフェンスを剥がし、先頭の JSON 値だけを採用する
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```[a-zA-Z]*\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```\s*$", "", cleaned)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        value, _index = json.JSONDecoder().raw_decode(cleaned)
+        return value
 
 
 def _normalize_glossary(payload: Any) -> list[str]:
