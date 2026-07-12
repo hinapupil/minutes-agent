@@ -5,8 +5,9 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# git は py-cord の upstream ブランチ (git+https) インストールに必要 (#3159 先取り)
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ffmpeg libopus0 \
+  && apt-get install -y --no-install-recommends ffmpeg libopus0 git \
   && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt pyproject.toml README.md ./
