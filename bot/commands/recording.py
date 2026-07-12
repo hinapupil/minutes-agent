@@ -156,10 +156,9 @@ class RecordingPromptView(discord.ui.View):
             )
             await interaction.followup.send(f"録音開始に失敗しました: {exc}", ephemeral=True)
             return
-        await interaction.followup.send(content, ephemeral=True)
         await self._cog._close_recording_prompt(
             guild.id,
-            f"⏺️ 録音を開始しました（開始: {actor_name} さん）",
+            f"⏺️ 録音を開始しました（開始: {actor_name} さん）\n{content}",
         )
 
     @discord.ui.button(label="今回はしない", style=discord.ButtonStyle.secondary)
@@ -218,13 +217,15 @@ class RecordingCog(commands.Cog):
             await ctx.respond("すでに録音中です", ephemeral=True)
             return
 
-        await ctx.defer(ephemeral=True)
+        # 録音の開始通知は本人だけでなくチャンネル全員に見せる（録音の透明性・同意）
+        await ctx.defer()
+        actor_name = getattr(ctx.author, "display_name", "不明")
         content = await self._start_recording(
             ctx.guild,
             text_channel=cast(discord.abc.Messageable, ctx.channel),
             voice_channel=voice_state.channel,
         )
-        await ctx.followup.send(content, ephemeral=True)
+        await ctx.followup.send(f"⏺️ 録音を開始しました（開始: {actor_name} さん）\n{content}")
 
     @discord.slash_command(name="stop", description="録音を停止して議事録生成を開始します")
     async def stop(self, ctx: discord.ApplicationContext) -> None:
@@ -238,7 +239,8 @@ class RecordingCog(commands.Cog):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             voice_client.stop_recording()
-        await ctx.respond("録音を停止しました。議事録生成ジョブを登録します", ephemeral=True)
+        actor_name = getattr(ctx.author, "display_name", "不明")
+        await ctx.respond(f"⏹️ 録音を停止しました（停止: {actor_name} さん）。議事録を生成中です...")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -402,7 +404,7 @@ class RecordingCog(commands.Cog):
             warnings.simplefilter("ignore", RuntimeWarning)
             voice_client.start_recording(sink, finished_callback)
         self._active[guild.id] = recording
-        return f"録音を開始しました\nmeeting_id: `{meeting_id}`"
+        return f"meeting_id: `{meeting_id}`"
 
     async def _get_prompt_text_channel(self) -> discord.abc.Messageable | None:
         if not self._settings.discord_channel_id:
