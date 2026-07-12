@@ -220,11 +220,16 @@ class RecordingCog(commands.Cog):
         # 録音の開始通知は本人だけでなくチャンネル全員に見せる（録音の透明性・同意）
         await ctx.defer()
         actor_name = getattr(ctx.author, "display_name", "不明")
-        content = await self._start_recording(
-            ctx.guild,
-            text_channel=cast(discord.abc.Messageable, ctx.channel),
-            voice_channel=voice_state.channel,
-        )
+        try:
+            content = await self._start_recording(
+                ctx.guild,
+                text_channel=cast(discord.abc.Messageable, ctx.channel),
+                voice_channel=voice_state.channel,
+            )
+        except Exception as exc:
+            # ここで応答しないと「考え中...」のまま固まる
+            await ctx.followup.send(f"録音開始に失敗しました: {exc}", ephemeral=True)
+            return
         await ctx.followup.send(f"⏺️ 録音を開始しました（開始: {actor_name} さん）\n{content}")
 
     @discord.slash_command(name="stop", description="録音を停止して議事録生成を開始します")
