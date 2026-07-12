@@ -46,6 +46,10 @@ Phase 1 として、Craig (録音 Bot) + Whisper (ローカル文字起こし) +
 
 ## 4. Architecture
 
+![システム構成図](diagrams/architecture.png)
+
+（図の生成元は [docs/diagrams/](diagrams/) — 詳細なフローは以下の Mermaid を正とする）
+
 ### システム全体
 
 ```mermaid
