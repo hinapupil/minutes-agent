@@ -408,8 +408,10 @@ class RecordingCog(commands.Cog):
             # upstream の「受信は壊れている」告知 (RuntimeWarning)。#3159 系で対応中のため抑制
             warnings.simplefilter("ignore", RuntimeWarning)
             # AfterCallback の形が 2.8.0 (exception,) と #3159 (sink, *args) で異なるため
-            # 実行時は *args から Exception を探す両対応実装 + 型は cast で吸収
-            voice_client.start_recording(sink, cast(Any, finished_callback))
+            # 実行時は *args から Exception を探す両対応実装 + 型は cast で吸収。
+            # 末尾のダミー引数は #3159 の `if self.after and self.args:` バグ
+            # （args が空だとコールバック自体が呼ばれない）の回避。upstream 報告予定
+            voice_client.start_recording(sink, cast(Any, finished_callback), None)
         self._active[guild.id] = recording
         return f"meeting_id: `{meeting_id}`"
 
