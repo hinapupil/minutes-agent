@@ -8,6 +8,9 @@ updates:
       interval: "weekly"
       day: "monday"
       timezone: "Asia/Tokyo"
+    # サプライチェーン対策: リリース直後のバージョンを掴まない（侵害は公開後数日で発覚することが多い）
+    cooldown:
+      default-days: 7
     groups:
       # 通常更新はまとめて1本のPRに（レビュー負荷を下げる。セキュリティ更新は別枠で即時）
       python-minor-patch:
@@ -19,3 +22,5 @@ updates:
       interval: "weekly"
       day: "monday"
       timezone: "Asia/Tokyo"
+    cooldown:
+      default-days: 7
