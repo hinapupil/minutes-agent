@@ -89,6 +89,9 @@ Firestore → Discord Webhook。IaC は Terraform、CI/CD は GitHub Actions
 <h2>🔗 リンク</h2>
 <p>
   <a class="btn" href="https://github.com/hinapupil/minutes-agent">GitHub リポジトリ</a>
+  <a class="btn"
+     href="https://github.com/hinapupil/minutes-agent/blob/main/docs/design.md">設計文書
+     (design.md)</a>
   <a class="btn" href="https://protopedia.net/">Proto Pedia 作品ページ</a>
   <a class="btn" href="https://discord.gg/tkZ9uBhDE">デモサーバー招待</a>
 </p>
