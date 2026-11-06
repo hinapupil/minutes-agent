@@ -70,8 +70,9 @@ just check     # lint + typecheck + test
 
 ## デプロイ
 
-main への push で GitHub Actions（`.github/workflows/deploy.yml`）が
-イメージのビルド → Artifact Registry push → Cloud Run ×2 デプロイ → GCE Bot 再起動まで行う。
+GitHub Actions（`.github/workflows/deploy.yml`）は手動実行（`workflow_dispatch`）のみ。
+実行するとイメージのビルド → Artifact Registry push → Cloud Run ×2 デプロイ → GCE Bot 再起動まで行う。
+GCP プロジェクトを 2026-08-10 に削除したため、main への push では起動しない。
 認証は Workload Identity Federation（キーレス）。
 
 インフラの初期構築は Terraform:

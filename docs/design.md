@@ -615,7 +615,7 @@ minutes-agent/
 - GitHub CodeQL: default setup (リポジトリ設定で有効化、workflow ファイルなし)
 
 ### deploy.yml
-- `on: push to main` + `workflow_dispatch`
+- `on: workflow_dispatch`（手動実行のみ。GCP プロジェクト削除に伴い push to main の自動起動は止めた）
 - **concurrency group** `deploy-production` で直列化（並列デプロイの楽観ロック衝突を防止）
 - Workload Identity Federation で keyless 認証（`google-github-actions/auth`、SA 鍵を Secrets に置かない）
 - Docker build → Artifact Registry push (api + bot の2イメージ)

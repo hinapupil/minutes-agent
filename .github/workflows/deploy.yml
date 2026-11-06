@@ -1,8 +1,8 @@
 name: Deploy
 
+# GCP プロジェクトを 2026-08-10 に削除したため、push での自動 deploy を止めた（手動実行のみ）。
+# 基盤を復活させるときは、この変更を revert して push トリガーを戻す。
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 # 連続マージ時に並列デプロイが gcloud の楽観ロックで衝突するため直列化する

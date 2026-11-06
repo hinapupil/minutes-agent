@@ -23,7 +23,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   }
 
   # このリポジトリの main ブランチの workflow 以外からのトークンを拒否する (CKV_GCP_125)。
-  # deploy.yml は push:main と workflow_dispatch（main 上で実行）のみなので sub をブランチまで固定できる。
+  # deploy.yml は workflow_dispatch（main 上で実行）のみなので sub をブランチまで固定できる。
   # 注: checkov が Terraform 変数を解決できないためリテラルで記述（var.github_repository と一致させること）
   attribute_condition = "assertion.sub == 'repo:hinapupil/minutes-agent:ref:refs/heads/main'"
 }
